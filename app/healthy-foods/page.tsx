@@ -113,6 +113,7 @@ export default function HealthyFoodsPage() {
                   src="https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?w=800"
                   alt="Healthy Foods"
                   fill
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover"
                 />
               </div>

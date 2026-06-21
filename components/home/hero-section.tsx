@@ -17,7 +17,7 @@ export function HeroSection() {
     <section className="relative flex min-h-[90vh] items-center overflow-hidden">
       <div className="absolute inset-0 z-0">
         <Image
-          src="https://images.pexels.com/photos/60638/pexels-photo-60638.jpeg?w=1920"
+          src="https://images.pexels.com/photos/1125135/pexels-photo-1125135.jpeg?w=1920"
           alt="Handmade products"
           fill
           priority

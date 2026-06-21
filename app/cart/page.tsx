@@ -71,7 +71,7 @@ export default function CartPage() {
                     {/* Product Image */}
                     <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-lg overflow-hidden flex-shrink-0">
                       <Image
-                        src={item.product.featured_image || 'https://images.pexels.com/photos/60638/pexels-photo-60638.jpeg?w=200'}
+                        src={item.product.featured_image || 'https://images.pexels.com/photos/1125135/pexels-photo-1125135.jpeg?w=200'}
                         alt={item.product.name}
                         fill
                         className="object-cover"

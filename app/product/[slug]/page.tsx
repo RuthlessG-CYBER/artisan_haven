@@ -21,7 +21,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Separator } from '@/components/ui/separator';
 import { ProductGrid } from '@/components/products';
 import { getProductBySlug, getProducts } from '@/lib/mock-data';
 import { useAuth } from '@/components/auth/auth-provider';
@@ -64,7 +63,7 @@ export default function ProductPage() {
 
   const images = product.images?.length > 0
     ? product.images
-    : [product.featured_image || 'https://images.pexels.com/photos/60638/pexels-photo-60638.jpeg?w=800'];
+    : [product.featured_image || 'https://i.pinimg.com/736x/a4/3e/e6/a43ee6d3e310564af22b71bdfb1a52e7.jpg?w=800'];
 
   const handleAddToCart = () => {
     addItem(product, quantity);

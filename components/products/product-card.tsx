@@ -53,14 +53,15 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
     >
       <Card className="group overflow-hidden border-border/60 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
         <div className="relative aspect-square overflow-hidden bg-muted">
-          <Link href={`/product/${product.slug}`}>
+          <Link href={`/product/${product.slug}`} className="relative block w-full h-full">
             <Image
               src={
                 product.featured_image ||
-                'https://images.pexels.com/photos/60638/pexels-photo-60638.jpeg?w=500'
+                'https://images.pexels.com/photos/1125135/pexels-photo-1125135.jpeg?w=500'
               }
               alt={product.name}
               fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           </Link>

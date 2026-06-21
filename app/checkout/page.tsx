@@ -425,7 +425,7 @@ export default function CheckoutPage() {
                   <div key={item.id} className="flex gap-3">
                     <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0">
                       <Image
-                        src={item.product.featured_image || 'https://images.pexels.com/photos/60638/pexels-photo-60638.jpeg?w=200'}
+                        src={item.product.featured_image || 'https://images.pexels.com/photos/1125135/pexels-photo-1125135.jpeg?w=200'}
                         alt={item.product.name}
                         fill
                         className="object-cover"

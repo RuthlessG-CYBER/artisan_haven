@@ -93,13 +93,12 @@ export default function AboutPage() {
     <div className="min-h-screen">
       {/* Hero */}
       <section className="relative py-20 overflow-hidden">
-        <div className="absolute inset-0 z-0">
-          <Image
-            src="https://images.pexels.com/photos/60638/pexels-photo-60638.jpeg?w=1920"
-            alt="About background"
-            fill
-            className="object-cover opacity-20 dark:opacity-10"
-          />
+        <div className="absolute inset-0 z-0 bg-gradient-to-br from-primary/10 via-background to-primary/5">
+          <div className="flex h-full w-full items-center justify-center">
+            <h1 className="text-8xl md:text-9xl font-black tracking-widest text-primary/10 select-none">
+              ARTISAN
+            </h1>
+          </div>
         </div>
         <div className="container mx-auto px-4 relative z-10">
           <motion.div
@@ -142,6 +141,7 @@ export default function AboutPage() {
                     src="https://images.pexels.com/photos/1125135/pexels-photo-1125135.jpeg?w=600"
                     alt="Handmade process"
                     fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
                     className="object-cover transition duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition" />
@@ -152,6 +152,7 @@ export default function AboutPage() {
                     src="https://images.pexels.com/photos/5217777/pexels-photo-5217777.jpeg?w=600"
                     alt="Recycled materials"
                     fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
                     className="object-cover transition duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition" />
@@ -162,6 +163,7 @@ export default function AboutPage() {
                     src="https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?w=600"
                     alt="Healthy foods"
                     fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
                     className="object-cover transition duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition" />
@@ -172,6 +174,7 @@ export default function AboutPage() {
                     src="https://images.pexels.com/photos/28983225/pexels-photo-28983225.jpeg?w=600"
                     alt="Custom cakes"
                     fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
                     className="object-cover transition duration-700 group-hover:scale-110"
                   />
                   <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition" />

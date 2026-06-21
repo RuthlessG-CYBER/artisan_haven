@@ -30,7 +30,7 @@ export function AuthPage({ defaultMode }: AuthPageProps) {
     <>
       <div className="relative min-h-[calc(100vh-5rem)] overflow-hidden">
         <Image
-          src="https://images.pexels.com/photos/60638/pexels-photo-60638.jpeg?w=1600"
+          src="https://images.pexels.com/photos/1125135/pexels-photo-1125135.jpeg?w=1600"
           alt="Handcrafted products"
           fill
           priority

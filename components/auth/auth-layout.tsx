@@ -45,7 +45,7 @@ export function AuthLayout({
           >
             <div className="absolute inset-0 z-0">
               <Image
-                src="https://images.pexels.com/photos/60638/pexels-photo-60638.jpeg?w=1200"
+                src="https://images.pexels.com/photos/1125135/pexels-photo-1125135.jpeg?w=1200"
                 alt="Handcrafted products"
                 fill
                 className="object-cover opacity-30 dark:opacity-20"

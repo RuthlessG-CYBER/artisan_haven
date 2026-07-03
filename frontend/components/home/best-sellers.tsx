@@ -1,0 +1,39 @@
+"use client";
+
+import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ProductGrid, ProductGridSkeleton } from '@/components/products';
+import { useProducts } from '@/hooks/use-products';
+import { SectionHeading } from '@/components/shared/section-heading';
+import { Reveal } from '@/components/shared/reveal';
+
+export function BestSellers() {
+  const { products, loading } = useProducts({ is_best_seller: true, limit: 4 });
+
+  return (
+    <section className="bg-muted/30 py-20">
+      <div className="container mx-auto px-4">
+        <div className="mb-12 flex flex-col items-start justify-between gap-6 sm:flex-row sm:items-end">
+          <SectionHeading
+            title="Best Sellers"
+            highlight="Best"
+            subtitle="Most loved products by our customers"
+            align="left"
+            className="mb-0"
+          />
+          <Reveal delay={0.1} className="shrink-0">
+            <Button asChild variant="outline" className="group">
+              <Link href="/shop?bestseller=true">
+                View All
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+              </Link>
+            </Button>
+          </Reveal>
+        </div>
+
+        {loading ? <ProductGridSkeleton count={4} /> : <ProductGrid products={products} />}
+      </div>
+    </section>
+  );
+}

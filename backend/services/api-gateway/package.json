@@ -1,0 +1,24 @@
+{
+  "name": "@artisan-haven/api-gateway",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@artisan-haven/database": "*",
+    "@clerk/backend": "^1.22.0",
+    "@fastify/cors": "^11.2.0",
+    "@fastify/http-proxy": "^11.3.0",
+    "@fastify/sensible": "^6.0.3",
+    "fastify": "^5.6.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.2"
+  }
+}

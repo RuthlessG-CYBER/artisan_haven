@@ -1,0 +1,24 @@
+{
+  "name": "artisan-haven-backend",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "services/*"
+  ],
+  "scripts": {
+    "dev:gateway": "npm --workspace @artisan-haven/api-gateway run dev",
+    "dev:catalog": "npm --workspace @artisan-haven/catalog-service run dev",
+    "dev:customers": "npm --workspace @artisan-haven/customer-service run dev",
+    "dev:orders": "npm --workspace @artisan-haven/order-service run dev",
+    "dev:auth-sync": "npm --workspace @artisan-haven/auth-sync-service run dev",
+    "prisma:generate": "npm --workspace @artisan-haven/database run prisma:generate",
+    "prisma:migrate": "npm --workspace @artisan-haven/database run prisma:migrate",
+    "prisma:seed": "npm --workspace @artisan-haven/database run prisma:seed"
+  },
+  "devDependencies": {
+    "@types/node": "^24.3.0"
+  },
+  "dependencies": {
+    "mongodb": "^7.4.0"
+  }
+}

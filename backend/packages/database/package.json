@@ -1,0 +1,17 @@
+{
+  "name": "@artisan-haven/database",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "mongodb": "^6.10.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "typescript": "^5.9.2"
+  }
+}

@@ -1,4 +1,7 @@
-import "dotenv/config";
+import { config } from "dotenv";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+config({ path: resolve(dirname(fileURLToPath(import.meta.url)), ".env") });
 import fastify from "fastify";
 import fastifySensible from "@fastify/sensible";
 import fastifyCors from "@fastify/cors";
@@ -35,7 +38,7 @@ app.register(fastifyCors, {
 
 // ─── Auth ───────────────────────────────────────────────────────────────
 
-const publicPrefixes = ["/health", "/catalog", "/auth", "/orders/track", "/payments/stripe/config", "/payments/stripe/webhook"];
+const publicPrefixes = ["/", "/health", "/catalog", "/auth", "/orders/track", "/payments/stripe/config", "/payments/stripe/webhook"];
 
 app.addHook("onRequest", async (request, reply) => {
   const pathname = request.url.split("?")[0] ?? "/";
@@ -50,6 +53,7 @@ app.addHook("onRequest", async (request, reply) => {
   request.headers["x-user-role"] = session.role || "CUSTOMER";
 });
 
+app.get("/", async () => ({ service: "artisan-haven", status: "ok", uptime: process.uptime() }));
 app.get("/health", async () => ({ service: "artisan-haven", status: "ok" }));
 
 function now() { return new Date(); }

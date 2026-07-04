@@ -200,7 +200,7 @@ export default function AddressesPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <Card className={address.isDefault ? 'border-primary' : ''}>
+              <Card className={(address.isDefault as boolean) ? 'border-primary' : ''}>
                 <CardContent className="pt-6">
                   <div className="flex flex-col sm:flex-row justify-between gap-4">
                     <div className="flex gap-4">
@@ -211,7 +211,7 @@ export default function AddressesPage() {
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-semibold">{address.fullName as string}</span>
                           <span className="text-sm text-muted-foreground">({address.type as string})</span>
-                          {address.isDefault && (
+                          {(address.isDefault as boolean) && (
                             <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Default</span>
                           )}
                         </div>
@@ -230,7 +230,7 @@ export default function AddressesPage() {
                         <Edit className="w-4 h-4 mr-2" />
                         Edit
                       </Button>
-                      {!address.isDefault && (
+                      {!(address.isDefault as boolean) && (
                         <>
                           <Button variant="outline" size="sm" onClick={() => handleSetDefault(address.id as string)}>
                             <Check className="w-4 h-4 mr-2" />

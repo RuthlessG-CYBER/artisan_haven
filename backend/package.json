@@ -5,7 +5,12 @@
     "packages/*",
     "services/*"
   ],
+  "type": "module",
   "scripts": {
+    "dev": "tsx watch server.ts",
+    "start": "tsx server.ts",
+    "build": "npm --workspace @artisan-haven/database run build",
+    "seed": "bash seed.sh",
     "dev:gateway": "npm --workspace @artisan-haven/api-gateway run dev",
     "dev:catalog": "npm --workspace @artisan-haven/catalog-service run dev",
     "dev:customers": "npm --workspace @artisan-haven/customer-service run dev",
@@ -19,6 +24,7 @@
     "@types/node": "^24.3.0"
   },
   "dependencies": {
+    "dotenv": "^16.6.1",
     "mongodb": "^7.4.0"
   }
 }

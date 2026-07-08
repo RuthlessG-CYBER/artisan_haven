@@ -83,20 +83,29 @@ cp backend/.env.example backend/.env
 
 Required backend variables:
 ```env
-# Database (MongoDB Atlas)
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/db?appName=Cluster0
-MONGODB_DB_NAME=artisan_haven
-
-# Auth - using session-based auth (no Clerk/Supabase needed)
+NODE_ENV=development
 AUTH_MODE=session
 
-# Payments
-RAZORPAY_KEY_ID=rzp_xxx
-RAZORPAY_KEY_SECRET=xxx
-ORDER_CURRENCY=USD
+# MongoDB
+MONGODB_URI=mongodb+srv://....
+MONGODB_DB_NAME=artisan_haven
 
-# Gateway
+# Stripe
+STRIPE_SECRET_KEY=sk_test_....
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_....
+STRIPE_WEBHOOK_SECRET=whsec_test
+ORDER_CURRENCY=usd
+
+# Service ports
 GATEWAY_PORT=4000
+CATALOG_SERVICE_PORT=4101
+CUSTOMER_SERVICE_PORT=4102
+ORDER_SERVICE_PORT=4103
+
+# Internal URLs used by the gateway and nginx
+CATALOG_SERVICE_URL=http://catalog-service:4101
+CUSTOMER_SERVICE_URL=http://customer-service:4102
+ORDER_SERVICE_URL=http://order-service:4103
 ```
 
 **Frontend:**
@@ -107,7 +116,7 @@ cp frontend/.env.example frontend/.env.local
 Required frontend variables:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_xxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
 ### 3. Start Everything with Docker Compose

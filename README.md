@@ -1,22 +1,20 @@
-<<<<<<< HEAD
 # Artisan Haven
 
-A full-stack artisan marketplace platform built with a microservices backend and a Next.js frontend.
+A full-stack artisan bakery & food marketplace built with a microservices backend and a Next.js frontend.
 
 ## Architecture Overview
 
 ```
 artisan_haven/
-├── frontend/          # Next.js 15 (App Router) + React 19 + Tailwind CSS v4
+├── frontend/          # Next.js 16 (App Router) + React 19 + Tailwind CSS v4
 └── backend/           # Microservices (Fastify) + MongoDB + Docker
     ├── packages/
     │   └── database/  # Shared MongoDB models & utilities
     └── services/
-        ├── api-gateway   # Fastify proxy + auth (session-based)
-        ├── catalog-service   # Products, categories
-        ├── customer-service  # Auth, profiles, cart, wishlist
-        ├── order-service     # Orders, Razorpay payments
-        └── auth-sync-service # (optional) Clerk webhook sync
+        ├── api-gateway        # Fastify proxy + auth (session-based)
+        ├── catalog-service    # Products, categories
+        ├── customer-service   # Auth, profiles, cart, wishlist
+        └── order-service      # Orders, Stripe payments
 ```
 
 ---
@@ -27,14 +25,16 @@ artisan_haven/
 
 | Technology | Version | Why We Use It |
 |------------|---------|---------------|
-| **Next.js** | 15.2.9 (App Router) | React framework with SSR, RSC, and file-based routing; optimal SEO and performance for e-commerce |
+| **Next.js** | 16.2.9 (App Router) | React framework with SSR, RSC, and file-based routing; optimal SEO and performance for e-commerce |
 | **React** | 19.2.4 | Latest React with Server Components, Actions, and improved hydration |
 | **Tailwind CSS** | v4 | Utility-first CSS with zero-config, smaller bundle, and modern features (OKLCH colors, container queries) |
 | **shadcn/ui** | 4.11.0 | Accessible, customizable components built on Radix UI; copy-paste ownership |
 | **Radix UI** | 1.6.0 | Unstyled, accessible primitives for complex components (dialog, dropdown, toast) |
 | **Framer Motion / Motion** | 12.40.0 | Production-ready animations with React 19 support |
 | **GSAP** | 3.15.0 | High-performance animations for complex sequences |
-| **Razorpay** | 2.9.6 | Indian payment gateway integration for checkout |
+| **Stripe** | 9.9.0 / 6.7.0 | Payment gateway integration (JS + React SDK) |
+| **Lucide React** | 1.21.0 | Lightweight, consistent icon set |
+| **Supabase** | 2.108.2 | Auth and backend services |
 | **TypeScript** | 5.x | Type safety across the stack |
 | **ESLint** | 9.x | Linting with Next.js config |
 
@@ -46,8 +46,8 @@ artisan_haven/
 | **MongoDB** | 7.x (driver) | Flexible document model for product catalog, carts, orders; horizontal scaling |
 | **TypeScript** | 5.x | End-to-end type safety shared with frontend via `@artisan-haven/database` |
 | **MongoDB Driver** | 7.4.0 | Native driver (no ORM overhead); direct control over queries |
-| **Session Auth** | Native | Lightweight session-based authentication (no external auth provider needed) |
-| **Razorpay** | Native SDK | Indian payment gateway for UPI, cards, wallets |
+| **Session Auth** | Native | Lightweight session-based authentication |
+| **Stripe** | Native SDK | Payment gateway for cards and wallets |
 | **Nginx** | Latest | Reverse proxy, SSL termination, load balancing for microservices |
 | **Docker / Docker Compose** | Latest | Containerized deployment; consistent dev/prod environments |
 | **tsx** | 4.x | TypeScript execution for development (fast HMR) |
@@ -60,7 +60,7 @@ artisan_haven/
 - **npm** 10+ (comes with Node.js)
 - **Docker** & **Docker Compose** (for containerized backend)
 - **MongoDB Atlas** account (or local MongoDB)
-- **Razorpay** account (for payments)
+- **Stripe** account (for payments)
 
 ---
 
@@ -87,16 +87,18 @@ Required backend variables:
 MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/db?appName=Cluster0
 MONGODB_DB_NAME=artisan_haven
 
-# Auth - using session-based auth (no Clerk/Supabase needed)
+# Auth - session-based auth
 AUTH_MODE=session
 
 # Payments
-RAZORPAY_KEY_ID=rzp_xxx
-RAZORPAY_KEY_SECRET=xxx
-ORDER_CURRENCY=USD
+STRIPE_SECRET_KEY=sk_xxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+ORDER_CURRENCY=usd
 
 # Gateway
 GATEWAY_PORT=4000
+CORS_ORIGIN=http://localhost:3000
 ```
 
 **Frontend:**
@@ -107,7 +109,7 @@ cp frontend/.env.example frontend/.env.local
 Required frontend variables:
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:4000
-NEXT_PUBLIC_RAZORPAY_KEY_ID=rzp_xxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_xxx
 ```
 
 ### 3. Start Everything with Docker Compose
@@ -158,7 +160,10 @@ npm install
 # Generate DB types
 npm --workspace @artisan-haven/database run build
 
-# Start each service in separate terminals:
+# Start combined server (all services in one process)
+npm run dev          # http://localhost:4000
+
+# OR start each service in separate terminals:
 npm run dev:gateway       # http://localhost:4000
 npm run dev:catalog       # internal
 npm run dev:customers     # internal
@@ -182,19 +187,35 @@ npm run dev               # http://localhost:3000
 ```
 frontend/
 ├── app/                    # Next.js App Router pages
-│   ├── (auth)/            # Auth routes (login, register)
-│   ├── (shop)/            # Shop layout (catalog, product, cart)
-│   ├── (dashboard)/       # User dashboard (orders, profile)
-│   ├── api/               # API routes (server actions)
-│   └── layout.tsx         # Root layout
+│   ├── about/             # About page
+│   ├── cakes/             # Cakes category page
+│   ├── cart/              # Shopping cart
+│   ├── checkout/          # Checkout with Stripe
+│   ├── contact/           # Contact page
+│   ├── dashboard/         # User dashboard
+│   │   ├── addresses/     # Saved addresses
+│   │   ├── orders/        # Order history
+│   │   ├── profile/       # User profile
+│   │   └── wishlist/      # Wishlist
+│   ├── faq/               # FAQ page
+│   ├── healthy-foods/     # Healthy foods category
+│   ├── login/             # Login page
+│   ├── order-confirmation/ # Order success page
+│   ├── product/[slug]/    # Dynamic product detail
+│   ├── register/          # Registration page
+│   ├── shop/              # Shop / catalog
+│   └── track-order/       # Order tracking
 ├── components/
-│   ├── ui/                # shadcn/ui components
-│   ├── shop/              # Shop-specific components
-│   └── layout/            # Header, footer, navigation
-├── hooks/                 # Custom React hooks
-├── lib/                   # Utilities (supabase, utils, constants)
-├── public/                # Static assets
-└── styles/                # Global styles (if any)
+│   ├── ui/                # shadcn/ui components (24 primitives)
+│   ├── auth/              # Login, register forms, auth provider
+│   ├── home/              # Hero, best-sellers, categories, testimonials
+│   ├── layout/            # Header, footer, theme toggle
+│   ├── products/          # Product card, grid, skeleton
+│   ├── shared/            # Reusable reveal, section heading
+│   └── ...                # Animated components (Aurora, BlurText, SpotlightCard, etc.)
+├── hooks/                 # Custom hooks (use-cart, use-auth-store, use-wishlist, etc.)
+├── lib/                   # API client, types, constants, utils, providers, shims
+└── public/                # Static assets
 ```
 
 ### Backend (`/backend`)
@@ -202,20 +223,20 @@ frontend/
 ```
 backend/
 ├── packages/
-│   └── database/          # Shared MongoDB models, indexes, seed
-│       ├── src/
-│       │   ├── models/    # Mongoose models
-│       │   ├── indexes/   # Index definitions
-│       │   └── seed.ts    # Seed script
-│       └── package.json
+│   └── database/          # Shared MongoDB models & utilities
+│       └── src/
+│           ├── auth.ts         # Auth-related DB logic
+│           ├── storefront.ts   # Product/catalog DB logic
+│           └── index.ts        # Shared exports
 ├── services/
 │   ├── api-gateway/       # Entry point, auth, proxy
 │   ├── catalog-service/   # Products, categories
 │   ├── customer-service/  # Auth, profile, cart, wishlist
-│   ├── order-service/     # Orders, payments, fulfillment
-│   └── auth-sync-service/ # Clerk webhook consumer
-├── nginx/                 # Nginx reverse proxy config
-├── supabase/              # SQL schemas (if using Supabase Postgres)
+│   └── order-service/     # Orders, payments (Stripe), fulfillment
+├── nginx/
+│   └── nginx.conf         # Reverse proxy config
+├── combined-server.ts     # Single-process dev server
+├── server.ts              # Main server entry point
 ├── docker-compose.yml     # Local dev stack
 ├── Dockerfile.service     # Multi-service Dockerfile
 └── package.json           # Workspace root
@@ -227,7 +248,9 @@ backend/
 
 ### Root (this directory)
 ```bash
-# No root scripts - work in frontend/ or backend/
+npm run build   # Build backend database package
+npm run dev     # Start backend dev server (combined)
+npm start       # Start backend production server
 ```
 
 ### Frontend
@@ -243,16 +266,18 @@ npm run lint       # Run ESLint
 ```bash
 cd backend
 npm install                    # Install all workspace deps
-npm run prisma:generate        # Generate DB client (if Prisma)
-npm run prisma:migrate         # Run migrations
-npm run prisma:seed            # Seed database
+npm run build                  # Generate DB types
+npm run seed                   # Seed database
 
-# Individual services
+# Start (combined - single process)
+npm run dev       # Using combined-server.ts
+npm start         # Production start
+
+# OR individual services
 npm run dev:gateway
 npm run dev:catalog
 npm run dev:customers
 npm run dev:orders
-npm run dev:auth-sync
 ```
 
 ### Docker
@@ -275,17 +300,19 @@ docker compose exec api-gateway sh  # Shell into gateway
 | `MONGODB_URI` | Yes | MongoDB Atlas connection string |
 | `MONGODB_DB_NAME` | Yes | Database name (e.g., `artisan_haven`) |
 | `AUTH_MODE` | Yes | `session` (session-based auth) |
-| `RAZORPAY_KEY_ID` | Yes | Razorpay key ID |
-| `RAZORPAY_KEY_SECRET` | Yes | Razorpay key secret |
-| `ORDER_CURRENCY` | No | Currency code (default `USD`) |
+| `STRIPE_SECRET_KEY` | Yes | Stripe secret key |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Yes | Stripe publishable key |
+| `STRIPE_WEBHOOK_SECRET` | Yes | Stripe webhook signing secret |
+| `ORDER_CURRENCY` | No | Currency code (default `usd`) |
 | `GATEWAY_PORT` | No | API gateway port (default 4000) |
+| `CORS_ORIGIN` | Yes | Allowed CORS origin |
 
 ### Frontend (`.env.local`)
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `NEXT_PUBLIC_API_URL` | Yes | Backend API base URL (e.g., `http://localhost:4000`) |
-| `NEXT_PUBLIC_RAZORPAY_KEY_ID` | Yes | Razorpay key ID for checkout |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Yes | Stripe publishable key for checkout |
 
 ---
 
@@ -295,8 +322,7 @@ docker compose exec api-gateway sh  # Shell into gateway
 |---------|-----------|---------------|
 | Catalog | `/api/catalog` | `GET /categories`, `GET /products`, `GET /products/:id` |
 | Customers | `/api/auth`, `/api/customers` | `POST /register`, `POST /login`, `GET /me`, `GET /cart`, `POST /cart` |
-| Orders | `/api/orders` | `POST /`, `GET /`, `GET /track/:number`, `POST /payments/razorpay/order` |
-| Auth Sync | `/api/auth-sync` | `POST /clerk/webhook` |
+| Orders | `/api/orders` | `POST /`, `GET /`, `GET /track/:number`, `POST /payments/stripe/order` |
 
 ---
 
@@ -318,12 +344,12 @@ npm run build
 # Deploy to Vercel, connect Git repo, add env vars
 ```
 
-### Backend (Docker / Kubernetes / Cloud Run)
+### Backend (Render / Docker / Cloud Run)
 
 ```bash
 cd backend
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
-# Or build/push images to registry and deploy via K8s
+docker compose -f docker-compose.yml up -d
+# Or use render.yaml for Render deployment
 ```
 
 ---
@@ -334,8 +360,8 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 |-------|----------|
 | `npm install` fails in backend | Delete `package-lock.json` and `node_modules`, re-run |
 | MongoDB connection refused | Ensure MongoDB is running; check `MONGODB_URI` |
-| CORS errors | Verify `NEXT_PUBLIC_API_URL` matches gateway origin |
-| Razorpay checkout fails | Check key IDs match; verify webhook URL in Razorpay dashboard |
+| CORS errors | Verify `NEXT_PUBLIC_API_URL` matches `CORS_ORIGIN` |
+| Stripe checkout fails | Check key IDs match; verify webhook URL in Stripe dashboard |
 | Frontend build fails | Run `npm run lint` first; fix TypeScript errors |
 
 ---
@@ -360,42 +386,3 @@ MIT License - see LICENSE file for details.
 
 - **Issues**: GitHub Issues
 - **Docs**: This README + inline code comments
-- **Architecture**: See `backend/README.md` and `frontend/README.md` for service-specific details
-=======
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
->>>>>>> origin/master

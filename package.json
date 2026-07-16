@@ -1,9 +1,0 @@
-{
-  "name": "artisan-haven",
-  "private": true,
-  "scripts": {
-    "start": "cd backend && npm start",
-    "build": "cd backend && npm run build",
-    "dev": "cd backend && npm run dev"
-  }
-}

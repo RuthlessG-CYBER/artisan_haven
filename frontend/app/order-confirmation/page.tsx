@@ -19,8 +19,6 @@ import { Card, CardContent } from '@/components/ui/card';
 export default function OrderConfirmationPage() {
   const router = useRouter();
   const [orderNumber] = useState<string>(() => {
-    // In a real app, you would get the order number from URL params or state
-    // For now, we'll generate a placeholder
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const orderNum = params.get('orderNumber');
@@ -28,7 +26,6 @@ export default function OrderConfirmationPage() {
         return orderNum;
       }
     }
-    // Generate a placeholder order number for demo
     return `ORD-${Date.now().toString().slice(-8)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
   });
 
@@ -40,7 +37,6 @@ export default function OrderConfirmationPage() {
         transition={{ duration: 0.5 }}
         className="max-w-2xl mx-auto"
       >
-        {/* Success Message */}
         <div className="text-center mb-12">
           <motion.div
             initial={{ scale: 0 }}
@@ -60,7 +56,6 @@ export default function OrderConfirmationPage() {
           </div>
         </div>
 
-        {/* Order Status Timeline */}
         <Card className="mb-8">
           <CardContent className="p-6">
             <h2 className="text-xl font-semibold mb-6">Order Status</h2>

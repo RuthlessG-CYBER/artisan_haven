@@ -36,8 +36,6 @@ app.register(fastifyCors, {
   credentials: true,
 });
 
-// ─── Auth ───────────────────────────────────────────────────────────────
-
 const publicPrefixes = ["/", "/health", "/catalog", "/auth", "/orders/track", "/payments/stripe/config", "/payments/stripe/webhook"];
 
 app.addHook("onRequest", async (request, reply) => {
@@ -63,8 +61,6 @@ function getUserId(r: fastify.FastifyRequest) {
   if (typeof uid !== "string") throw app.httpErrors.unauthorized("Auth required");
   return uid;
 }
-
-// ─── Catalog Routes ─────────────────────────────────────────────────────
 
 app.get("/catalog/products", async (request) => {
   const q = request.query as Record<string, string>;
@@ -125,8 +121,6 @@ function parseGram(v: unknown): number | undefined {
   return s ? Number(s) : undefined;
 }
 
-// ─── Auth Routes ────────────────────────────────────────────────────────
-
 app.post("/auth/register", async (request, reply) => {
   const { firstName, lastName, email, phone, password } = request.body as any;
   if (!firstName?.trim() || !lastName?.trim() || !email || !password) throw app.httpErrors.badRequest("Missing required fields");
@@ -166,8 +160,6 @@ app.post("/auth/logout", async (request) => {
   if (auth?.startsWith("Bearer ")) { const sessions = await getCollection("user_sessions"); await sessions.updateOne({ tokenHash: hashSessionToken(auth.replace("Bearer ", "")), revokedAt: null }, { $set: { revokedAt: now() } }); }
   return { data: { message: "Logged out successfully" } };
 });
-
-// ─── Cart Routes ────────────────────────────────────────────────────────
 
 app.get("/customers/cart", async (request) => {
   const userId = getUserId(request);
@@ -215,8 +207,6 @@ app.delete("/customers/cart/items/:itemId", async (request) => {
   return { data: { message: "Item removed from cart" } };
 });
 
-// ─── Address Routes ─────────────────────────────────────────────────────
-
 app.get("/customers/addresses", async (request) => {
   const userId = getUserId(request);
   const addresses = await getCollection<Address>("addresses");
@@ -243,8 +233,6 @@ app.delete("/customers/addresses/:addressId", async (request) => {
   return { data: { message: "Address deleted" } };
 });
 
-// ─── Profile ────────────────────────────────────────────────────────────
-
 app.get("/customers/profile", async (request) => {
   const userId = getUserId(request);
   const profile = await (await getCollection<UserProfile>("user_profiles")).findOne({ id: userId });
@@ -262,8 +250,6 @@ app.patch("/customers/profile", async (request) => {
   await (await getCollection<UserProfile>("user_profiles")).updateOne({ id: userId }, { $set: update });
   return { data: { message: "Profile updated" } };
 });
-
-// ─── Order Routes ───────────────────────────────────────────────────────
 
 function generateOrderNumber() { const ts = Date.now().toString().slice(-8); const rand = crypto.randomBytes(3).toString("hex").toUpperCase(); return `ORD-${ts}-${rand}`; }
 function calcShipping(subtotal: number, method: string) { return method === "express" ? 9.99 : subtotal >= 50 ? 0 : 5.99; }
@@ -342,8 +328,6 @@ app.get("/orders/track/:orderNumber", async (request) => {
   return { data: { orderNumber: order.orderNumber, status: mapOrderStatus(order.status), currentStep: orderedStatuses.indexOf(order.status) + 1, estimatedDelivery: order.placedAt ? new Date(order.placedAt.getTime() + 5 * 864e5).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : undefined, trackingNumber: order.fulfillments?.[0]?.trackingNumber, carrier: order.fulfillments?.[0]?.carrier, items: items.map((i) => ({ name: i.productName, qty: i.quantity, price: i.unitPrice * i.quantity })), total: order.totalAmount, timeline: [{ date: order.placedAt?.toISOString() ?? now().toISOString(), event: "Order placed", location: "" }] } };
 });
 
-// ─── Stripe Payment Routes ──────────────────────────────────────────────
-
 app.get("/payments/stripe/config", async () => ({ data: { publishableKey: process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? "" } }));
 
 app.post("/payments/stripe/create-payment-intent", async (request) => {
@@ -397,8 +381,6 @@ app.post("/payments/stripe/webhook", async (request) => {
   app.log.info({ payload: request.body }, "Stripe webhook received");
   return { data: { received: true } };
 });
-
-// ─── Start ──────────────────────────────────────────────────────────────
 
 const port = Number(process.env.PORT ?? 4000);
 await app.listen({ port, host: "0.0.0.0" });

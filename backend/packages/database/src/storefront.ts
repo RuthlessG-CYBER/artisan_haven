@@ -1,4 +1,3 @@
-// MongoDB-compatible types
 export type ProductType = "ART_CRAFTS" | "HEALTHY_FOOD" | "CAKES";
 export type OrderStatus = "PENDING" | "PAYMENT_PENDING" | "PAID" | "PROCESSING" | "READY_FOR_DISPATCH" | "SHIPPED" | "OUT_FOR_DELIVERY" | "DELIVERED" | "CANCELLED" | "REFUNDED";
 export type AddressType = "HOME" | "WORK" | "OTHER";
@@ -8,7 +7,6 @@ export type PaymentStatus = "PENDING" | "CAPTURED" | "FAILED" | "REFUNDED";
 export type FulfillmentMethod = "SHIPPING" | "PICKUP" | "LOCAL_DELIVERY";
 export type InventoryChangeReason = "ORDER_PLACED" | "STOCK_ADDED" | "STOCK_REMOVED" | "RETURN";
 
-// Enum-like objects for runtime use
 export const FulfillmentMethod = {
   SHIPPING: "SHIPPING" as const,
   PICKUP: "PICKUP" as const,

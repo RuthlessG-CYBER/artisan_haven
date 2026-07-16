@@ -69,8 +69,6 @@ export class ApiClient {
     }
   }
 
-  // ─── Auth ──────────────────────────────────────────────────────────────────
-
   async register(input: {
     firstName: string;
     lastName: string;
@@ -95,8 +93,6 @@ export class ApiClient {
     return this.request<void>('/auth/logout', { method: 'POST' });
   }
 
-  // ─── Catalog ───────────────────────────────────────────────────────────────
-
   async getProducts(params?: Record<string, string>) {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
     return this.request<Array<Record<string, unknown>>>(`/catalog/products${qs}`);
@@ -105,8 +101,6 @@ export class ApiClient {
   async getProduct(slug: string) {
     return this.request<Record<string, unknown>>(`/catalog/products/${slug}`);
   }
-
-  // ─── Cart ──────────────────────────────────────────────────────────────────
 
   async getCart() {
     return this.request<Array<Record<string, unknown>>>('/customers/cart');
@@ -132,8 +126,6 @@ export class ApiClient {
     });
   }
 
-  // ─── Orders ────────────────────────────────────────────────────────────────
-
   async getOrders(params?: Record<string, string>) {
     const qs = params ? '?' + new URLSearchParams(params).toString() : '';
     return this.request<Array<Record<string, unknown>>>(`/orders/orders${qs}`);
@@ -153,8 +145,6 @@ export class ApiClient {
       body: JSON.stringify(orderData),
     });
   }
-
-  // ─── Stripe Payments ───────────────────────────────────────────────────────
 
   async getStripeConfig() {
     return this.request<{ publishableKey: string }>('/payments/stripe/config');
@@ -179,8 +169,6 @@ export class ApiClient {
     );
   }
 
-  // ─── Addresses ─────────────────────────────────────────────────────────────
-
   async getAddresses() {
     return this.request<Array<Record<string, unknown>>>('/customers/addresses');
   }
@@ -197,8 +185,6 @@ export class ApiClient {
       method: 'DELETE',
     });
   }
-
-  // ─── Profile ───────────────────────────────────────────────────────────────
 
   async getProfile() {
     return this.request<Record<string, unknown>>('/customers/profile');

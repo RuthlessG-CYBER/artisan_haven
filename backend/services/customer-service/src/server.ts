@@ -32,8 +32,6 @@ async function getUserId(request: fastify.FastifyRequest): Promise<string> {
   return userId;
 }
 
-// ─── Auth Routes ────────────────────────────────────────────────────────────
-
 app.post("/auth/register", async (request, reply) => {
   const { firstName, lastName, email, phone, password } = request.body as {
     firstName: string;
@@ -155,8 +153,6 @@ app.post("/auth/logout", async (request, reply) => {
   return { data: { message: "Logged out successfully" } };
 });
 
-// ─── Cart Routes ────────────────────────────────────────────────────────────
-
 app.get("/customers/cart", async (request, reply) => {
   const userId = await getUserId(request);
 
@@ -274,8 +270,6 @@ app.delete("/customers/cart/items/:itemId", async (request, reply) => {
   return { data: { message: "Item removed from cart" } };
 });
 
-// ─── Address Routes ─────────────────────────────────────────────────────────
-
 app.get("/customers/addresses", async (request, reply) => {
   const userId = await getUserId(request);
   const addresses = await getCollection<Address>("addresses");
@@ -334,8 +328,6 @@ app.delete("/customers/addresses/:addressId", async (request, reply) => {
 
   return { data: { message: "Address deleted" } };
 });
-
-// ─── Profile Route ──────────────────────────────────────────────────────────
 
 app.get("/customers/profile", async (request, reply) => {
   const userId = await getUserId(request);

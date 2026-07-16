@@ -12,8 +12,6 @@ const app = fastify({ logger: true });
 
 app.register(fastifySensible);
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
-
 function generateOrderNumber(): string {
   const ts = Date.now().toString().slice(-8);
   const rand = crypto.randomBytes(3).toString("hex").toUpperCase();
@@ -44,8 +42,6 @@ function calcTax(subtotal: number): number {
 function calcTotal(subtotal: number, shipping: number, tax: number): number {
   return Math.round((subtotal + shipping + tax) * 100) / 100;
 }
-
-// ─── Order Routes ───────────────────────────────────────────────────────────
 
 app.get("/orders/orders", async (request, reply) => {
   const userId = await getUserId(request);
@@ -241,8 +237,6 @@ app.post("/orders/orders", async (request, reply) => {
   };
 });
 
-// ─── Tracking Routes ────────────────────────────────────────────────────────
-
 app.get("/orders/track/:orderNumber", async (request, reply) => {
   const { orderNumber } = request.params as { orderNumber: string };
 
@@ -288,8 +282,6 @@ app.get("/orders/track/:orderNumber", async (request, reply) => {
     },
   };
 });
-
-// ─── Stripe Payment Routes ──────────────────────────────────────────────────
 
 app.get("/payments/stripe/config", async () => {
   return {

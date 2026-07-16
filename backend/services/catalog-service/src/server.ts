@@ -81,8 +81,6 @@ app.get("/catalog/products/:slug", async (request, reply) => {
   return { data: serializeProduct(product) };
 });
 
-// ─── Seed / Admin Endpoints ──────────────────────────────────────────────────
-
 app.post("/catalog/products", async (request, reply) => {
   const body = request.body as Record<string, unknown>;
   const products = Array.isArray(body) ? body : [body];

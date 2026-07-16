@@ -36,6 +36,28 @@ app.register(fastifyCors, {
   credentials: true,
 });
 
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT_MAX = 100;
+const RATE_LIMIT_WINDOW = 60_000;
+
+app.addHook("onRequest", async (request, reply) => {
+  const key = request.ip;
+  const now = Date.now();
+  let entry = rateLimitStore.get(key);
+  if (!entry || now > entry.resetAt) {
+    entry = { count: 0, resetAt: now + RATE_LIMIT_WINDOW };
+    rateLimitStore.set(key, entry);
+  }
+  entry.count++;
+  reply.header("X-RateLimit-Limit", RATE_LIMIT_MAX);
+  reply.header("X-RateLimit-Remaining", Math.max(0, RATE_LIMIT_MAX - entry.count));
+  reply.header("X-RateLimit-Reset", Math.ceil((entry.resetAt - now) / 1000));
+  if (entry.count > RATE_LIMIT_MAX) {
+    reply.header("Retry-After", Math.ceil((entry.resetAt - now) / 1000));
+    throw app.httpErrors.tooManyRequests("Rate limit exceeded");
+  }
+});
+
 const publicPrefixes = ["/", "/health", "/catalog", "/auth", "/orders/track", "/payments/stripe/config", "/payments/stripe/webhook"];
 
 app.addHook("onRequest", async (request, reply) => {

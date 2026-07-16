@@ -1,0 +1,321 @@
+[{
+  "_id": {
+    "$oid": "6a476faefec2a51ae7fa5f7f"
+  },
+  "id": "p-recycled-glass-vase",
+  "category": {
+    "id": "cat-decor",
+    "name": "Handcrafted Decor",
+    "slug": "handcrafted-decor"
+  },
+  "categoryId": "cat-decor",
+  "compareAtPrice": 59.99,
+  "createdAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  },
+  "description": "Handblown recycled glass vase with unique swirling patterns. Each piece is one-of-a-kind, crafted from reclaimed glass materials.",
+  "featuredImage": "https://images.pexels.com/photos/37858501/pexels-photo-37858501.jpeg?w=800",
+  "images": [
+    "https://images.pexels.com/photos/37858501/pexels-photo-37858501.jpeg?w=800",
+    "https://images.pexels.com/photos/36646475/pexels-photo-36646475.jpeg?w=800",
+    "https://images.pexels.com/photos/8361858/pexels-photo-8361858.jpeg?w=800"
+  ],
+  "ingredients": null,
+  "isBestSeller": true,
+  "isFeatured": true,
+  "name": "Recycled Glass Vase",
+  "nutrition": null,
+  "price": 45,
+  "productType": "ART_CRAFTS",
+  "shortDescription": "Handblown recycled glass with unique patterns.",
+  "slug": "recycled-glass-vase",
+  "stockQuantity": 15,
+  "sustainabilityScore": 5,
+  "updatedAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a476faefec2a51ae7fa5f81"
+  },
+  "id": "p-eco-cotton-wall-art",
+  "category": {
+    "id": "cat-recycled",
+    "name": "Recycled Art",
+    "slug": "recycled-art"
+  },
+  "categoryId": "cat-recycled",
+  "compareAtPrice": null,
+  "createdAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  },
+  "description": "Beautiful wall art piece made from organic cotton with natural plant-based dyes. Features intricate geometric patterns.",
+  "featuredImage": "https://images.pexels.com/photos/1125135/pexels-photo-1125135.jpeg?w=800",
+  "images": [
+    "https://images.pexels.com/photos/1125135/pexels-photo-1125135.jpeg?w=800"
+  ],
+  "ingredients": null,
+  "isBestSeller": false,
+  "isFeatured": true,
+  "name": "Eco-Cotton Wall Art",
+  "nutrition": null,
+  "price": 89,
+  "productType": "ART_CRAFTS",
+  "shortDescription": "Organic cotton wall art with natural dyes.",
+  "slug": "eco-cotton-wall-art",
+  "stockQuantity": 8,
+  "sustainabilityScore": 5,
+  "updatedAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a476faefec2a51ae7fa5f83"
+  },
+  "id": "p-reclaimed-wood-picture-frame",
+  "category": {
+    "id": "cat-decor",
+    "name": "Handcrafted Decor",
+    "slug": "handcrafted-decor"
+  },
+  "categoryId": "cat-decor",
+  "compareAtPrice": 45,
+  "createdAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  },
+  "description": "Handcrafted picture frame made from reclaimed barn wood. Each frame has a unique rustic character and finish.",
+  "featuredImage": "https://images.pexels.com/photos/1267347/pexels-photo-1267347.jpeg?w=800",
+  "images": [
+    "https://images.pexels.com/photos/1267347/pexels-photo-1267347.jpeg?w=800"
+  ],
+  "ingredients": null,
+  "isBestSeller": true,
+  "isFeatured": false,
+  "name": "Reclaimed Wood Picture Frame",
+  "nutrition": null,
+  "price": 35,
+  "productType": "ART_CRAFTS",
+  "shortDescription": "Rustic frame crafted from reclaimed barn wood.",
+  "slug": "reclaimed-wood-picture-frame",
+  "stockQuantity": 12,
+  "sustainabilityScore": 4,
+  "updatedAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a476faefec2a51ae7fa5f84"
+  },
+  "id": "p-organic-granola-mix",
+  "category": {
+    "id": "cat-snacks",
+    "name": "Organic Snacks",
+    "slug": "organic-snacks"
+  },
+  "categoryId": "cat-snacks",
+  "compareAtPrice": null,
+  "createdAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  },
+  "description": "Small-batch organic granola with oats, almonds, seeds, and honey. Perfect for breakfast or a healthy snack.",
+  "featuredImage": "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?w=800",
+  "images": [
+    "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg?w=800"
+  ],
+  "ingredients": [
+    "Rolled oats",
+    "Almonds",
+    "Pumpkin seeds",
+    "Honey",
+    "Coconut oil"
+  ],
+  "isBestSeller": true,
+  "isFeatured": true,
+  "name": "Organic Granola Mix",
+  "nutrition": {
+    "calories": 210,
+    "proteinGram": 6,
+    "carbsGram": 28,
+    "fatGram": 9,
+    "fiberGram": 5,
+    "sugarGram": 7
+  },
+  "price": 12.99,
+  "productType": "HEALTHY_FOOD",
+  "shortDescription": "Crunchy small-batch organic granola.",
+  "slug": "organic-granola-mix",
+  "stockQuantity": 35,
+  "sustainabilityScore": 4,
+  "updatedAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a476faefec2a51ae7fa5f86"
+  },
+  "id": "p-fresh-energy-bars",
+  "category": {
+    "id": "cat-baked",
+    "name": "Fresh Baked",
+    "slug": "fresh-baked"
+  },
+  "categoryId": "cat-baked",
+  "compareAtPrice": null,
+  "createdAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  },
+  "description": "Naturally sweet energy bars made with dates, nuts, and superfoods. No added sugar, just pure wholesome energy.",
+  "featuredImage": "https://images.pexels.com/photos/6208140/pexels-photo-6208140.jpeg?w=800",
+  "images": [
+    "https://images.pexels.com/photos/6208140/pexels-photo-6208140.jpeg?w=800"
+  ],
+  "ingredients": [
+    "Dates",
+    "Almonds",
+    "Cacao",
+    "Chia seeds",
+    "Sea salt"
+  ],
+  "isBestSeller": false,
+  "isFeatured": true,
+  "name": "Fresh Energy Bars",
+  "nutrition": {
+    "calories": 160,
+    "proteinGram": 4,
+    "carbsGram": 19,
+    "fatGram": 8,
+    "fiberGram": 4,
+    "sugarGram": 12
+  },
+  "price": 18.99,
+  "productType": "HEALTHY_FOOD",
+  "shortDescription": "No-bake date and nut energy bars.",
+  "slug": "fresh-energy-bars",
+  "stockQuantity": 28,
+  "sustainabilityScore": 4,
+  "updatedAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a476faefec2a51ae7fa5f88"
+  },
+  "id": "p-vegan-protein-cookies",
+  "category": {
+    "id": "cat-baked",
+    "name": "Fresh Baked",
+    "slug": "fresh-baked"
+  },
+  "categoryId": "cat-baked",
+  "compareAtPrice": null,
+  "createdAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  },
+  "description": "Delicious vegan protein cookies made with plant-based protein, oats, and dark chocolate chips.",
+  "featuredImage": "https://images.pexels.com/photos/23948783/pexels-photo-23948783.jpeg?w=800",
+  "images": [
+    "https://images.pexels.com/photos/23948783/pexels-photo-23948783.jpeg?w=800"
+  ],
+  "ingredients": [
+    "Oat flour",
+    "Pea protein",
+    "Coconut sugar",
+    "Dark chocolate",
+    "Coconut oil"
+  ],
+  "isBestSeller": true,
+  "isFeatured": false,
+  "name": "Vegan Protein Cookies",
+  "nutrition": {
+    "calories": 180,
+    "proteinGram": 12,
+    "carbsGram": 22,
+    "fatGram": 7,
+    "fiberGram": 3,
+    "sugarGram": 8
+  },
+  "price": 14.99,
+  "productType": "HEALTHY_FOOD",
+  "shortDescription": "Plant-based protein cookies with chocolate.",
+  "slug": "vegan-protein-cookies",
+  "stockQuantity": 22,
+  "sustainabilityScore": 3,
+  "updatedAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a476faffec2a51ae7fa5f89"
+  },
+  "id": "p-vanilla-cake",
+  "category": {
+    "id": "cat-cakes",
+    "name": "Custom Cakes",
+    "slug": "custom-cakes"
+  },
+  "categoryId": "cat-cakes",
+  "compareAtPrice": 65,
+  "createdAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  },
+  "description": "Vanilla layer cake with buttercream flowers and custom messaging.",
+  "featuredImage": "https://images.pexels.com/photos/1721932/pexels-photo-1721932.jpeg?w=800",
+  "images": [
+    "https://images.pexels.com/photos/1721932/pexels-photo-1721932.jpeg?w=800"
+  ],
+  "ingredients": null,
+  "isBestSeller": false,
+  "isFeatured": false,
+  "name": "Garden Vanilla Celebration Cake",
+  "nutrition": null,
+  "price": 55,
+  "productType": "CAKES",
+  "shortDescription": "Custom vanilla celebration cake with floral buttercream.",
+  "slug": "garden-vanilla-celebration-cake",
+  "stockQuantity": 12,
+  "sustainabilityScore": null,
+  "updatedAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  }
+},
+{
+  "_id": {
+    "$oid": "6a476faffec2a51ae7fa5f8b"
+  },
+  "id": "p-chocolate-cake",
+  "category": {
+    "id": "cat-cakes",
+    "name": "Custom Cakes",
+    "slug": "custom-cakes"
+  },
+  "categoryId": "cat-cakes",
+  "compareAtPrice": null,
+  "createdAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  },
+  "description": "Rich chocolate sponge, ganache drip, and personalized decoration.",
+  "featuredImage": "https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?w=800",
+  "images": [
+    "https://images.pexels.com/photos/291528/pexels-photo-291528.jpeg?w=800"
+  ],
+  "ingredients": null,
+  "isBestSeller": false,
+  "isFeatured": false,
+  "name": "Chocolate Drip Birthday Cake",
+  "nutrition": null,
+  "price": 72,
+  "productType": "CAKES",
+  "shortDescription": "Rich chocolate birthday cake with ganache drip.",
+  "slug": "chocolate-drip-birthday-cake",
+  "stockQuantity": 9,
+  "sustainabilityScore": null,
+  "updatedAt": {
+    "$date": "2026-07-03T08:15:41.729Z"
+  }
+}]

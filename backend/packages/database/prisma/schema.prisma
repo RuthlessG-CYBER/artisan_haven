@@ -1,0 +1,241 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id        String    @id @default(uuid())
+  name      String
+  slug      String    @unique
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  products  Product[]
+
+  @@map("categories")
+}
+
+model Product {
+  id                  String             @id @default(uuid())
+  name                String
+  slug                String             @unique
+  description         String?
+  shortDescription    String?
+  price               Float
+  compareAtPrice      Float?
+  productType         String
+  featuredImage       String
+  images              String[]
+  categoryId          String?
+  category            Category?          @relation(fields: [categoryId], references: [id])
+  stockQuantity       Int                @default(0)
+  isFeatured          Boolean            @default(false)
+  isBestSeller        Boolean            @default(false)
+  sustainabilityScore Int?
+  sku                 String?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  nutrition           ProductNutrition?
+  ingredients         String[]
+  cartItems           CartItem[]
+  inventoryMovements  InventoryMovement[]
+
+  @@map("products")
+}
+
+model ProductNutrition {
+  id          String   @id @default(uuid())
+  productId   String   @unique
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  calories    Int?
+  proteinGram Float?
+  carbsGram   Float?
+  fatGram     Float?
+  fiberGram   Float?
+  sugarGram   Float?
+
+  @@map("product_nutrition")
+}
+
+model UserProfile {
+  id          String        @id @default(uuid())
+  email       String        @unique
+  firstName   String
+  lastName    String?
+  phone       String?
+  clerkUserId String?       @unique
+  role        String        @default("USER")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  addresses   Address[]
+  sessions    UserSession[]
+
+  @@map("user_profiles")
+}
+
+model Address {
+  id         String      @id @default(uuid())
+  userId     String
+  user       UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       String
+  fullName   String
+  phone      String
+  line1      String
+  line2      String?
+  city       String
+  state      String
+  postalCode String
+  country    String      @default("United States")
+  isDefault  Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  @@map("addresses")
+}
+
+model CartItem {
+  id                String   @id @default(uuid())
+  userId            String?
+  productId         String
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId         String?
+  quantity          Int
+  customizationData Json?
+  unitPrice         Float
+  status            String   @default("ACTIVE")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("cart_items")
+}
+
+model Order {
+  id                  String             @id @default(uuid())
+  orderNumber         String             @unique
+  userId              String
+  status              String             @default("PENDING")
+  paymentStatus       String             @default("PENDING")
+  fulfillmentMethod   String
+  currency            String             @default("usd")
+  subtotal            Float
+  shippingFee         Float
+  taxAmount           Float
+  totalAmount         Float
+  notes               String?
+  shippingAddressJson Json?
+  billingAddressJson  Json?
+  placedAt            DateTime?
+  deliveredAt         DateTime?
+  createdAt           DateTime           @default(now())
+  updatedAt           DateTime           @updatedAt
+  items               OrderItem[]
+  payments            Payment[]
+  fulfillments        Fulfillment[]
+  statusHistory       OrderStatusEvent[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id                String   @id @default(uuid())
+  orderId           String
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId         String
+  productName       String
+  productSlug       String?
+  sku               String?
+  unitPrice         Float
+  quantity          Int
+  customizationData Json?
+  createdAt         DateTime @default(now())
+
+  @@map("order_items")
+}
+
+model Payment {
+  id                String   @id @default(uuid())
+  orderId           String
+  order             Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider          String
+  providerReference String?  @unique
+  amount            Float
+  currency          String   @default("usd")
+  status            String   @default("PENDING")
+  metadata          Json?
+  capturedAt        DateTime?
+  createdAt         DateTime @default(now())
+
+  @@map("payments")
+}
+
+model PaymentOrder {
+  id        String   @id
+  userId    String
+  amount    Int
+  currency  String
+  status    String
+  orderId   String?
+  createdAt DateTime @default(now())
+
+  @@map("payment_orders")
+}
+
+model Fulfillment {
+  id                  String    @id @default(uuid())
+  orderId             String
+  order               Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  trackingNumber      String?
+  carrier             String?
+  estimatedDeliveryAt DateTime?
+  actualDeliveryAt    DateTime?
+  createdAt           DateTime  @default(now())
+
+  @@map("fulfillments")
+}
+
+model OrderStatusEvent {
+  id        String   @id @default(uuid())
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  status    String
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@map("order_status_events")
+}
+
+model UserSession {
+  id         String      @id @default(uuid())
+  userId     String
+  user       UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash  String      @unique
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime    @default(now())
+
+  @@map("user_sessions")
+}
+
+model InventoryMovement {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  orderId   String?
+  delta     Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@map("inventory_movements")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+
+  @@map("users")
+}

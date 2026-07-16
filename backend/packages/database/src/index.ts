@@ -1,35 +1,13 @@
-import { MongoClient, Db, Collection, Document } from "mongodb";
+import { PrismaClient } from "@prisma/client";
 
-const globalForMongo = globalThis as unknown as {
-  client?: MongoClient;
-  db?: Db;
+const globalForPrisma = globalThis as unknown as {
+  prisma?: PrismaClient;
 };
 
-export async function getMongoClient(): Promise<MongoClient> {
-  if (!globalForMongo.client) {
-    const uri = process.env.MONGODB_URI;
-    if (!uri) {
-      throw new Error("MONGODB_URI environment variable is not set");
-    }
-    
-    globalForMongo.client = new MongoClient(uri);
-    await globalForMongo.client.connect();
-  }
-  return globalForMongo.client;
-}
+export const prisma = globalForPrisma.prisma || new PrismaClient();
 
-export async function getMongoDb(): Promise<Db> {
-  if (!globalForMongo.db) {
-    const client = await getMongoClient();
-    const dbName = process.env.MONGODB_DB_NAME || "artisan_haven";
-    globalForMongo.db = client.db(dbName);
-  }
-  return globalForMongo.db;
-}
-
-export async function getCollection<T extends Document>(name: string): Promise<Collection<T>> {
-  const db = await getMongoDb();
-  return db.collection<T>(name);
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
 }
 
 export * from "./auth.js";

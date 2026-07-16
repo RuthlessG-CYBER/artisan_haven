@@ -1,7 +1,7 @@
 import fastify from "fastify";
 import fastifySensible from "@fastify/sensible";
 import fastifyCors from "@fastify/cors";
-import { hashSessionToken, getCollection } from "@artisan-haven/database";
+import { hashSessionToken, prisma } from "@artisan-haven/database";
 
 import { registerCatalogRoutes } from "./services/catalog-service/src/routes";
 import { registerCustomerRoutes } from "./services/customer-service/src/routes";
@@ -27,11 +27,13 @@ app.addHook("onRequest", async (request, reply) => {
   }
 
   const token = authorization.replace("Bearer ", "");
-  const sessionsCollection = await getCollection<any>("user_sessions");
-  const session = await sessionsCollection.findOne({
-    tokenHash: hashSessionToken(token),
-    revokedAt: null,
-    expiresAt: { $gt: new Date() },
+  const session = await prisma.userSession.findFirst({
+    where: {
+      tokenHash: hashSessionToken(token),
+      revokedAt: null,
+      expiresAt: { gt: new Date() },
+    },
+    include: { user: true }
   });
 
   if (!session) {
@@ -39,8 +41,8 @@ app.addHook("onRequest", async (request, reply) => {
   }
 
   request.headers["x-user-id"] = session.userId;
-  request.headers["x-user-email"] = session.email;
-  request.headers["x-user-role"] = session.role || "CUSTOMER";
+  request.headers["x-user-email"] = session.user.email;
+  request.headers["x-user-role"] = session.user.role || "CUSTOMER";
 });
 
 app.get("/health", async () => ({ service: "artisan-haven", status: "ok" }));

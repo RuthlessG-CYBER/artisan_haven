@@ -1,0 +1,52 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: artisan-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: soumya
+      POSTGRES_DB: artisan
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d artisan"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: artisan-backend
+    environment:
+      DATABASE_URL: postgresql://postgres:soumya@postgres:5432/artisan
+      PORT: 4000
+      CORS_ORIGIN: http://localhost:3000
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_51TkiX32KNE7n5atVhkSN1ZrUPG51HNegP3ZWFzOUth2MFZmESOscn2inNNBJu8w7w9y6U5HWrCVXodVQ9xIrSVk4000hVOyMtj}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-pk_test_51TkiX32KNE7n5atVhkSN1ZrUPG51HNegP3ZWFzOUth2MFZmESOscn2inNNBJu8w7w9y6U5HWrCVXodVQ9xIrSVk4000hVOyMtj}
+    ports:
+      - "4000:4000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:4000
+    container_name: artisan-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-pk_test_51TkiX32KNE7n5atVhkSN1ZrUPG51HNegP3ZWFzOUth2MFZmESOscn2inNNBJu8w7w9y6U5HWrCVXodVQ9xIrSVk4000hVOyMtj}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:

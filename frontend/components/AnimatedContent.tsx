@@ -38,14 +38,19 @@ function playWhenInView(tl: gsap.core.Timeline, el: HTMLElement, startPct: numbe
     onEnter: play,
   });
 
-  requestAnimationFrame(() => {
+  const rafId = requestAnimationFrame(() => {
     ScrollTrigger.refresh();
     const rect = el.getBoundingClientRect();
     const triggerLine = window.innerHeight * (startPct / 100);
     if (rect.top <= triggerLine) play();
   });
 
-  return st;
+  return {
+    kill() {
+      cancelAnimationFrame(rafId);
+      st.kill();
+    },
+  };
 }
 
 const AnimatedContent: React.FC<AnimatedContentProps> = ({
@@ -120,11 +125,12 @@ const AnimatedContent: React.FC<AnimatedContentProps> = ({
       clearProps: 'transform,opacity',
     });
 
-    const st = playWhenInView(tl, el, startPct);
+    const trigger = playWhenInView(tl, el, startPct);
 
     return () => {
-      st.kill();
+      trigger.kill();
       tl.kill();
+      gsap.killTweensOf(el);
     };
   }, [
     container,

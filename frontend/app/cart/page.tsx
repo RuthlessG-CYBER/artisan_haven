@@ -107,7 +107,7 @@ export default function CartPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => updateQuantity(item.product_id, Math.max(1, item.quantity - 1))}
+                            onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                           >
                             <Minus className="w-3 h-3" />
                           </Button>
@@ -116,7 +116,7 @@ export default function CartPage() {
                             variant="ghost"
                             size="icon"
                             className="h-8 w-8"
-                            onClick={() => updateQuantity(item.product_id, item.quantity + 1)}
+                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           >
                             <Plus className="w-3 h-3" />
                           </Button>
@@ -131,7 +131,7 @@ export default function CartPage() {
                             size="icon"
                             className="text-destructive hover:text-destructive"
                             onClick={() => {
-                              removeItem(item.product_id);
+                              removeItem(item.id);
                               toast.success('Item removed from cart');
                             }}
                           >

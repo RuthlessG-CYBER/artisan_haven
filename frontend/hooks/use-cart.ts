@@ -1,145 +1,50 @@
 "use client";
 
-import * as React from "react";
-import type { CakeCustomization, CartItem } from "@/lib/types";
-import { apiClient } from "@/lib/api";
-import { useAuthStore } from "./use-auth-store";
-
-interface CartState {
-  items: CartItem[];
-}
-
-let state: CartState = { items: [] };
-let hasLoadedFromApi = false;
-const listeners = new Set<() => void>();
-
-function emit() {
-  listeners.forEach((listener) => listener());
-}
-
-function getSnapshot() {
-  return state;
-}
-
-const CART_SERVER_SNAPSHOT: CartState = { items: [] };
-
-function getServerSnapshot() {
-  return CART_SERVER_SNAPSHOT;
-}
+import { useEffect, useMemo } from 'react';
+import { useAppSelector, useAppDispatch } from '@/lib/store/hooks';
+import { fetchCart, addToCart, removeFromCart, updateCartItem, clearCart as clearCartThunk } from '@/lib/store/cartSlice';
+import type { CakeCustomization, CartItem } from '@/lib/types';
 
 export function useCart() {
-  const current = React.useSyncExternalStore(
-    (cb) => {
-      listeners.add(cb);
-      return () => listeners.delete(cb);
-    },
-    getSnapshot,
-    getServerSnapshot
-  );
+  const dispatch = useAppDispatch();
+  const { items, loading } = useAppSelector((state) => state.cart);
 
-  const { isAuthenticated, user } = useAuthStore();
+  useEffect(() => {
+    dispatch(fetchCart());
+  }, [dispatch]);
 
-  React.useEffect(() => {
-    if (isAuthenticated && user && !hasLoadedFromApi) {
-      hasLoadedFromApi = true;
-      apiClient.getCart().then((res) => {
-        if (res.data && Array.isArray(res.data)) {
-          const mapped: CartItem[] = (res.data as Array<Record<string, unknown>>).map((item: any) => ({
-            id: item.id || crypto.randomUUID(),
-            user_id: user.id,
-            product_id: item.product_id || item.productId,
-            variant_id: item.variant_id || null,
-            quantity: item.quantity || 1,
-            customization_data: (item.customization_data || item.customizationData || null) as CakeCustomization | null,
-            product: item.product || item.product_id,
-          }));
-          if (mapped.length > 0) {
-            state = { items: mapped };
-            emit();
-          }
-        }
-      }).catch(() => {});
-    }
-    if (!isAuthenticated) {
-      hasLoadedFromApi = false;
-    }
-  }, [isAuthenticated, user]);
+  const addItem = async (product: CartItem["product"], quantity: number, customization?: CakeCustomization) => {
+    await dispatch(addToCart({ productId: product.id, quantity, customization })).unwrap();
+  };
 
-  return React.useMemo(
-    () => ({
-      items: current.items,
-      addItem: async (product: CartItem["product"], quantity: number, customization?: CakeCustomization) => {
-        if (isAuthenticated) {
-          const res = await apiClient.addToCart(product.id, quantity, customization as Record<string, unknown> | undefined);
-          if (res.error) return;
-        }
+  const removeItem = async (itemId: string) => {
+    await dispatch(removeFromCart(itemId)).unwrap();
+  };
 
-        const existingIndex = state.items.findIndex(
-          (item) =>
-            item.product_id === product.id &&
-            JSON.stringify(item.customization_data) === JSON.stringify(customization ?? null)
-        );
+  const updateQuantity = async (itemId: string, quantity: number) => {
+    await dispatch(updateCartItem({ itemId, quantity })).unwrap();
+  };
 
-        if (existingIndex > -1) {
-          const updatedItems = [...state.items];
-          updatedItems[existingIndex] = {
-            ...updatedItems[existingIndex],
-            quantity: updatedItems[existingIndex].quantity + quantity,
-          };
-          state = { items: updatedItems };
-        } else {
-          state = {
-            items: [
-              ...state.items,
-              {
-                id: crypto.randomUUID(),
-                user_id: null,
-                product_id: product.id,
-                variant_id: null,
-                quantity,
-                customization_data: customization ?? null,
-                product,
-              },
-            ],
-          };
-        }
-        emit();
-      },
-      removeItem: async (productId: string) => {
-        if (isAuthenticated) {
-          const item = state.items.find((i) => i.product_id === productId);
-          if (item) {
-            await apiClient.removeFromCart(item.id).catch(() => {});
-          }
-        }
-        state = { items: state.items.filter((item) => item.product_id !== productId) };
-        emit();
-      },
-      updateQuantity: async (productId: string, quantity: number) => {
-        if (isAuthenticated) {
-          const item = state.items.find((i) => i.product_id === productId);
-          if (item) {
-            await apiClient.updateCartItem(item.id, Math.max(1, quantity)).catch(() => {});
-          }
-        }
-        state = {
-          items: state.items.map((item) =>
-            item.product_id === productId ? { ...item, quantity: Math.max(1, quantity) } : item
-          ),
-        };
-        emit();
-      },
-      clearCart: async () => {
-        if (isAuthenticated && state.items.length > 0) {
-          await Promise.all(state.items.map((item) => apiClient.removeFromCart(item.id).catch(() => {})));
-        }
-        state = { items: [] };
-        emit();
-      },
-      getTotal: () =>
-        state.items.reduce((total, item) => total + (item.product?.price || 0) * item.quantity, 0),
-      getItemCount: () => state.items.reduce((count, item) => count + item.quantity, 0),
-    }),
-    [current.items, isAuthenticated]
-  );
+  const clearCart = async () => {
+    await dispatch(clearCartThunk()).unwrap();
+  };
+
+  const getTotal = () => {
+    return items.reduce((total, item) => total + (item.product?.price || 0) * item.quantity, 0);
+  };
+
+  const getItemCount = () => {
+    return items.reduce((count, item) => count + item.quantity, 0);
+  };
+
+  return useMemo(() => ({
+    items,
+    loading,
+    addItem,
+    removeItem,
+    updateQuantity,
+    clearCart,
+    getTotal,
+    getItemCount,
+  }), [items, loading]);
 }

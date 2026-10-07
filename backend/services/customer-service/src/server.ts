@@ -365,5 +365,42 @@ app.patch("/customers/profile", async (request, reply) => {
   return { data: { message: "Profile updated" } };
 });
 
+async function requireSuperAdmin(request: fastify.FastifyRequest) {
+  const role = request.headers["x-user-role"] as string;
+  if (role !== "SUPER_ADMIN") {
+    throw app.httpErrors.forbidden("Super Admin access required");
+  }
+}
+
+app.get("/customers/staff", async (request, reply) => {
+  await requireSuperAdmin(request);
+  const profilesCol = await getCollection<UserProfile>("user_profiles");
+  const staff = await profilesCol.find({ role: { $in: ["ADMIN", "MANAGER", "SUPER_ADMIN"] } }).toArray();
+  return { data: staff.map(serializeAuthUser) };
+});
+
+app.post("/auth/invite", async (request, reply) => {
+  await requireSuperAdmin(request);
+  const { email, role } = request.body as { email: string, role: string };
+  const invitationsCol = await getCollection<any>("user_invitations");
+  
+  const token = crypto.randomUUID();
+  const invitation = {
+    id: crypto.randomUUID(),
+    email,
+    role,
+    token,
+    expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    createdAt: new Date(),
+  };
+  
+  await invitationsCol.insertOne(invitation);
+  
+  // Mock sending email
+  app.log.info({ email, role, token }, "Sent invitation email");
+  
+  return { data: { message: "Invitation sent successfully", token } };
+});
+
 const port = Number(process.env.CUSTOMER_SERVICE_PORT ?? 4102);
 await app.listen({ port, host: "0.0.0.0" });

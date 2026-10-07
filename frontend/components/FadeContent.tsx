@@ -110,7 +110,8 @@ const FadeContent: React.FC<FadeContentProps> = ({
       onEnter: play,
     });
 
-    requestAnimationFrame(() => {
+    let rafId = 0;
+    rafId = requestAnimationFrame(() => {
       ScrollTrigger.refresh();
       const rect = el.getBoundingClientRect();
       const triggerLine = window.innerHeight * (startPct / 100);
@@ -118,6 +119,7 @@ const FadeContent: React.FC<FadeContentProps> = ({
     });
 
     return () => {
+      cancelAnimationFrame(rafId);
       st.kill();
       tl.kill();
       gsap.killTweensOf(el);

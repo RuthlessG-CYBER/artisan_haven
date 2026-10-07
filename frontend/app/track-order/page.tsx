@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { apiClient } from "@/lib/api";
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -17,7 +18,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
-import { apiClient } from '@/lib/api';
 import { Suspense } from 'react';
 
 const TRACKING_STEPS = [
@@ -45,17 +45,16 @@ function TrackOrderContent() {
 
     setIsTracking(true);
 
-    const res = await apiClient.trackOrder(orderNumber.trim());
-    setIsTracking(false);
-
-    if (res.error || !res.data) {
-      toast.error('Order not found', {
-        description: res.error || 'No order found with that number.',
-      });
-      return;
+    try {
+      const res = await apiClient.trackOrder(orderNumber.trim());
+      if (res.error) throw new Error(res.error);
+      if (res.data) setTrackingResult(res.data);
+      else toast.error('Order not found');
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to track order');
+    } finally {
+      setIsTracking(false);
     }
-
-    setTrackingResult(res.data as Record<string, unknown>);
   };
 
   return (

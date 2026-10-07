@@ -6,7 +6,7 @@ import crypto from "node:crypto";
 import Stripe from "stripe";
 
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY || "";
-const stripe = new Stripe(stripeSecretKey, { apiVersion: "2025-03-31.basil" });
+const stripe = new Stripe(stripeSecretKey, { apiVersion: "2026-06-24.dahlia" });
 
 const app = fastify({ logger: true });
 
@@ -485,6 +485,103 @@ app.post("/payments/stripe/confirm-order", async (request, reply) => {
       status: "paid",
     },
   };
+});
+
+async function requireAdmin(request: fastify.FastifyRequest) {
+  const role = request.headers["x-user-role"] as string;
+  if (role !== "ADMIN" && role !== "SUPER_ADMIN" && role !== "MANAGER") {
+    throw app.httpErrors.forbidden("Admin access required");
+  }
+}
+
+// ─── Admin Analytics Routes ─────────────────────────────────────────────────
+
+app.get("/orders/analytics/summary", async (request, reply) => {
+  await requireAdmin(request);
+  const ordersCol = await getCollection<Order>("orders");
+  
+  const now = new Date();
+  const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  const oneYearAgo = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate());
+
+  const getStats = async (fromDate: Date) => {
+    const stats = await ordersCol.aggregate([
+      { $match: { placedAt: { $gte: fromDate }, status: { $in: ["PAID", "PROCESSING", "READY_FOR_DISPATCH", "SHIPPED", "OUT_FOR_DELIVERY", "DELIVERED"] } } },
+      { $group: { _id: null, revenue: { $sum: "$totalAmount" }, count: { $sum: 1 } } }
+    ]).toArray();
+    return stats[0] || { revenue: 0, count: 0 };
+  };
+
+  const daily = await getStats(oneDayAgo);
+  const yearly = await getStats(oneYearAgo);
+
+  return {
+    data: {
+      dailyRevenue: daily.revenue,
+      dailySales: daily.count,
+      dailyProfit: daily.revenue * 0.2,
+      yearlyRevenue: yearly.revenue,
+      yearlySales: yearly.count,
+      yearlyProfit: yearly.revenue * 0.2,
+    }
+  };
+});
+
+app.get("/orders/analytics/top-products", async (request, reply) => {
+  await requireAdmin(request);
+  const itemsCol = await getCollection<OrderItem>("order_items");
+  const topProducts = await itemsCol.aggregate([
+    { $group: { _id: "$productId", name: { $first: "$productName" }, totalQuantity: { $sum: "$quantity" }, totalRevenue: { $sum: { $multiply: ["$unitPrice", "$quantity"] } } } },
+    { $sort: { totalQuantity: -1 } },
+    { $limit: 10 }
+  ]).toArray();
+  return { data: topProducts };
+});
+
+app.patch("/orders/orders/:orderNumber/status", async (request, reply) => {
+  await requireAdmin(request);
+  const { orderNumber } = request.params as { orderNumber: string };
+  const { status } = request.body as { status: OrderStatus };
+  
+  const ordersCol = await getCollection<Order>("orders");
+  const order = await ordersCol.findOneAndUpdate(
+    { orderNumber },
+    { $set: { status, updatedAt: new Date() } },
+    { returnDocument: 'after' }
+  );
+  
+  if (!order) throw app.httpErrors.notFound("Order not found");
+  
+  return { data: { orderNumber: order.orderNumber, status: mapOrderStatus(order.status) } };
+});
+
+// ─── Coupons Routes ─────────────────────────────────────────────────────────
+
+app.post("/orders/coupons", async (request, reply) => {
+  const role = request.headers["x-user-role"] as string;
+  if (role !== "SUPER_ADMIN") throw app.httpErrors.forbidden("Super Admin access required");
+  
+  const body = request.body as any;
+  const couponsCol = await getCollection<any>("coupons");
+  
+  const coupon = {
+    id: crypto.randomUUID(),
+    code: body.code,
+    discountType: body.discountType,
+    discountValue: body.discountValue,
+    isActive: true,
+    createdAt: new Date(),
+  };
+  
+  await couponsCol.insertOne(coupon);
+  return { data: coupon };
+});
+
+app.get("/orders/coupons", async (request, reply) => {
+  await requireAdmin(request);
+  const couponsCol = await getCollection<any>("coupons");
+  const coupons = await couponsCol.find({}).toArray();
+  return { data: coupons };
 });
 
 app.post("/payments/stripe/webhook", async (request, reply) => {

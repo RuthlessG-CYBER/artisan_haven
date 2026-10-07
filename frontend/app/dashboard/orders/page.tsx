@@ -33,12 +33,16 @@ export default function OrdersPage() {
   const [statusFilter, setStatusFilter] = useState('all');
 
   useEffect(() => {
-    apiClient.getOrders().then((res) => {
-      if (res.data && Array.isArray(res.data)) {
-        setOrders(res.data);
+    let isMounted = true;
+    const fetchOrders = async () => {
+      const res = await apiClient.getOrders();
+      if (isMounted) {
+        setOrders(res.data || []);
+        setLoading(false);
       }
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    };
+    fetchOrders();
+    return () => { isMounted = false; };
   }, []);
 
   const filteredOrders = orders.filter((order) => {

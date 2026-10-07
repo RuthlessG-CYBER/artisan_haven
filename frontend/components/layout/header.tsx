@@ -52,9 +52,18 @@ export function Header() {
   useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 16);
+    let ticking = false;
+    const handleScroll = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        const next = window.scrollY > 16;
+        setIsScrolled((prev) => (prev === next ? prev : next));
+        ticking = false;
+      });
+    };
     handleScroll();
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -62,8 +71,8 @@ export function Header() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? 'border-b border-border/50 bg-background/90 py-2 shadow-sm backdrop-blur-xl'
-          : 'bg-background/70 py-3 backdrop-blur-md'
+          ? 'border-b border-border/50 bg-background/95 py-2 shadow-sm'
+          : 'bg-background/90 py-3'
       }`}
     >
       <div className="container mx-auto px-4">

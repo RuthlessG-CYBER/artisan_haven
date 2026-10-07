@@ -26,8 +26,8 @@ export function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-r from-background via-background/90 to-transparent" />
       </div>
 
-      <div className="absolute top-20 right-10 h-72 w-72 rounded-full bg-primary/20 blur-3xl" />
-      <div className="absolute bottom-20 left-10 h-96 w-96 rounded-full bg-accent/20 blur-3xl" />
+      <div className="pointer-events-none absolute top-20 right-10 h-72 w-72 rounded-full bg-primary/15 blur-2xl" />
+      <div className="pointer-events-none absolute bottom-20 left-10 h-96 w-96 rounded-full bg-accent/15 blur-2xl" />
 
       <div className="container relative z-10 mx-auto px-4">
         <div className="max-w-3xl">

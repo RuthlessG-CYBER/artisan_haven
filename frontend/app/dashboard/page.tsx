@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge';
 import { useWishlist } from '@/hooks/use-wishlist';
 import { useCart } from '@/hooks/use-cart';
 import { apiClient } from '@/lib/api';
+import { useAuthStore } from '@/hooks/use-auth-store';
 
 const SIDEBAR_ITEMS = [
   { icon: Package, label: 'Dashboard', href: '/dashboard' },
@@ -38,18 +39,23 @@ const STATUS_BADGES: Record<string, { label: string; color: string }> = {
 };
 
 export default function DashboardPage() {
+  const { user } = useAuthStore();
   const { items: wishlistItems } = useWishlist();
   const { getItemCount } = useCart();
   const [orders, setOrders] = useState<Array<Record<string, unknown>>>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiClient.getOrders({ limit: '3' }).then((res) => {
-      if (res.data && Array.isArray(res.data)) {
-        setOrders(res.data);
+    let isMounted = true;
+    const fetchOrders = async () => {
+      const res = await apiClient.getOrders({ limit: '3' });
+      if (isMounted) {
+        setOrders(res.data || []);
+        setLoading(false);
       }
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    };
+    fetchOrders();
+    return () => { isMounted = false; };
   }, []);
 
   const deliveredCount = orders.filter(
@@ -67,8 +73,8 @@ export default function DashboardPage() {
                   <User className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">Guest User</h3>
-                  <p className="text-sm text-muted-foreground">Sign in for full access</p>
+                  <h3 className="font-semibold">{user ? `${user.firstName} ${user.lastName}` : 'Guest User'}</h3>
+                  <p className="text-sm text-muted-foreground">{user ? user.email : 'Sign in for full access'}</p>
                 </div>
               </div>
               <nav className="space-y-2">

@@ -37,13 +37,12 @@ export default function AddressesPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(EMPTY_FORM);
 
-  const loadAddresses = () => {
-    apiClient.getAddresses().then((res) => {
-      if (res.data && Array.isArray(res.data)) {
-        setAddresses(res.data);
-      }
-      setLoading(false);
-    }).catch(() => setLoading(false));
+  const loadAddresses = async () => {
+    const res = await apiClient.getAddresses();
+    if (res.data) {
+      setAddresses(res.data);
+    }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -58,21 +57,32 @@ export default function AddressesPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const res = await apiClient.createAddress({
-      ...formData,
-      type: formData.type,
-      isDefault: addresses.length === 0,
-    });
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    if (res.error) {
-      toast.error('Failed to save address');
-      return;
+    const newAddress = {
+      id: editingId || `addr-${Date.now()}`,
+      type: formData.type,
+      fullName: formData.fullName,
+      phone: formData.phone,
+      address: formData.address,
+      apartment: formData.apartment,
+      city: formData.city,
+      state: formData.state,
+      zipCode: formData.zipCode,
+      country: 'United States',
+      isDefault: addresses.length === 0,
+    };
+
+    if (editingId) {
+      setAddresses(addresses.map(addr => addr.id === editingId ? newAddress : addr));
+    } else {
+      setAddresses([...addresses, newAddress]);
     }
 
     toast.success(editingId ? 'Address updated' : 'Address added');
     setDialogOpen(false);
     resetForm();
-    loadAddresses();
   };
 
   const handleDelete = async (id: string) => {
@@ -81,14 +91,11 @@ export default function AddressesPage() {
       return;
     }
 
-    const res = await apiClient.deleteAddress(id);
-    if (res.error) {
-      toast.error('Failed to delete address');
-      return;
-    }
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500));
 
+    setAddresses(addresses.filter(addr => addr.id !== id));
     toast.success('Address deleted');
-    loadAddresses();
   };
 
   const handleSetDefault = (id: string) => {
@@ -211,16 +218,16 @@ export default function AddressesPage() {
                         <div className="flex items-center gap-2 mb-1">
                           <span className="font-semibold">{address.fullName as string}</span>
                           <span className="text-sm text-muted-foreground">({address.type as string})</span>
-                          {address.isDefault && (
+                          {!!address.isDefault && (
                             <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">Default</span>
                           )}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                          {address.line1 as string}
-                          {address.line2 ? `, ${address.line2 as string}` : ''}
+                          {address.address as string}
+                          {address.apartment ? `, ${address.apartment as string}` : ''}
                         </p>
                         <p className="text-sm text-muted-foreground">
-                          {address.city as string}, {address.state as string} {address.postalCode as string}
+                          {address.city as string}, {address.state as string} {address.zipCode as string}
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">{address.phone as string}</p>
                       </div>

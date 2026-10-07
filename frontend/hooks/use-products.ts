@@ -16,59 +16,35 @@ interface UseProductsOptions {
   in_stock?: boolean;
 }
 
-function mapApiProduct(item: Record<string, unknown>): Product {
-  return {
-    id: (item.id || item._id) as string,
-    name: item.name as string,
-    slug: item.slug as string,
-    description: item.description as string | undefined,
-    short_description: item.shortDescription as string | undefined,
-    price: Number(item.price) || 0,
-    compare_at_price: item.compareAtPrice ? Number(item.compareAtPrice) : undefined,
-    product_type: (item.productType || item.product_type || "art_crafts") as Product["product_type"],
-    featured_image: (item.featuredImage || item.featured_image || "") as string,
-    images: (item.images as string[]) || [],
-    category: item.category as Product["category"],
-    stock_quantity: Number(item.stockQuantity ?? item.stock_quantity ?? 0),
-    is_featured: Boolean(item.isFeatured ?? item.is_featured),
-    is_best_seller: Boolean(item.isBestSeller ?? item.is_best_seller),
-    sustainability_score: item.sustainabilityScore as number | undefined,
-    nutritional_info: (item.nutritionalInfo || item.nutritional_info) as Product["nutritional_info"],
-    ingredients: item.ingredients as string[] | undefined,
-    created_at: (item.createdAt || item.created_at) as string | undefined,
-  };
-}
-
 export function useProducts(options: UseProductsOptions = {}) {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let cancelled = false;
+    let isMounted = true;
     setLoading(true);
 
-    const params: Record<string, string> = {};
-    if (options.product_type) params.product_type = options.product_type;
-    if (options.is_featured) params.is_featured = "true";
-    if (options.is_best_seller) params.is_best_seller = "true";
-    if (options.limit) params.limit = String(options.limit);
-    if (options.search) params.search = options.search;
-    if (options.sort) params.sort = options.sort;
-    if (options.min_price !== undefined) params.min_price = String(options.min_price);
-    if (options.max_price !== undefined) params.max_price = String(options.max_price);
-    if (options.in_stock) params.in_stock = "true";
+    const fetchProducts = async () => {
+      // Clean up options to string values for API
+      const params: Record<string, string> = {};
+      Object.entries(options).forEach(([key, value]) => {
+        if (value !== undefined) {
+          params[key] = String(value);
+        }
+      });
 
-    apiClient.getProducts(params).then((res) => {
-      if (cancelled) return;
-      setLoading(false);
-      if (res.data && Array.isArray(res.data)) {
-        setProducts(res.data.map(mapApiProduct));
+      const res = await apiClient.getProducts(params);
+      if (isMounted) {
+        setProducts(res.data || []);
+        setLoading(false);
       }
-    }).catch(() => {
-      if (!cancelled) setLoading(false);
-    });
+    };
 
-    return () => { cancelled = true; };
+    fetchProducts();
+
+    return () => {
+      isMounted = false;
+    };
   }, [
     options.product_type,
     options.is_featured,
@@ -89,21 +65,27 @@ export function useProduct(slug: string) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!slug) return;
-    let cancelled = false;
+    let isMounted = true;
+    if (!slug) {
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
 
-    apiClient.getProduct(slug).then((res) => {
-      if (cancelled) return;
-      setLoading(false);
-      if (res.data) {
-        setProduct(mapApiProduct(res.data as Record<string, unknown>));
+    const fetchProduct = async () => {
+      const res = await apiClient.getProduct(slug);
+      if (isMounted) {
+        setProduct(res.data || null);
+        setLoading(false);
       }
-    }).catch(() => {
-      if (!cancelled) setLoading(false);
-    });
+    };
 
-    return () => { cancelled = true; };
+    fetchProduct();
+
+    return () => {
+      isMounted = false;
+    };
   }, [slug]);
 
   return { product, loading };

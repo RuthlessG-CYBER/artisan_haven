@@ -27,98 +27,23 @@ import { useAuth } from '@/components/auth/auth-provider';
 import { useCart } from '@/hooks/use-cart';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api';
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import { StripePaymentForm } from '@/components/checkout/stripe-payment-form';
+
+let stripePromise: Promise<any> | null = null;
+const getStripe = (publishableKey: string) => {
+  if (!stripePromise) {
+    stripePromise = loadStripe(publishableKey);
+  }
+  return stripePromise;
+};
 
 const CHECKOUT_STEPS = [
   { id: 'shipping', title: 'Shipping', icon: MapPin },
   { id: 'delivery', title: 'Delivery', icon: Truck },
   { id: 'payment', title: 'Payment', icon: CreditCard },
 ];
-
-function StripePaymentForm({
-  clientSecret,
-  shippingInfo,
-  deliveryMethod,
-  saveInfo,
-  onSuccess,
-  onError,
-}: {
-  clientSecret: string;
-  shippingInfo: any;
-  deliveryMethod: string;
-  saveInfo: boolean;
-  onSuccess: () => void;
-  onError: (msg: string) => void;
-}) {
-  const stripe = useStripe();
-  const elements = useElements();
-  const [loading, setLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!stripe || !elements) return;
-
-    setLoading(true);
-
-    const { error: submitError } = await elements.submit();
-    if (submitError) {
-      onError(submitError.message ?? 'Payment failed');
-      setLoading(false);
-      return;
-    }
-
-    const { error: payError, paymentIntent } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/order-confirmation`,
-      },
-      redirect: 'if_required',
-    });
-
-    if (payError) {
-      onError(payError.message ?? 'Payment failed');
-      setLoading(false);
-      return;
-    }
-
-    if (paymentIntent && paymentIntent.status === 'succeeded') {
-      const res = await apiClient.confirmStripeOrder({
-        paymentIntentId: paymentIntent.id,
-        shippingInfo,
-        deliveryMethod,
-        saveInfo,
-      });
-
-      if (res.error) {
-        onError(res.error);
-        setLoading(false);
-        return;
-      }
-
-      onSuccess();
-    }
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      <PaymentElement />
-      <Button type="submit" className="w-full mt-4" disabled={!stripe || loading}>
-        {loading ? (
-          <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Processing...
-          </>
-        ) : (
-          <>
-            <Lock className="w-4 h-4 mr-2" />
-            Pay Now
-          </>
-        )}
-      </Button>
-    </form>
-  );
-}
 
 export default function CheckoutPage() {
   const [currentStep, setCurrentStep] = useState(0);
@@ -141,10 +66,34 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [deliveryMethod, setDeliveryMethod] = useState('standard');
   const [saveInfo, setSaveInfo] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState('stripe');
+  const [paymentMethod, setPaymentMethod] = useState('cash_on_delivery');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [stripePromise, setStripePromise] = useState<ReturnType<typeof loadStripe> | null>(null);
+  
   const [clientSecret, setClientSecret] = useState<string | null>(null);
+  const [publishableKey, setPublishableKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Fetch Stripe publishable key on mount
+    apiClient.getStripeConfig().then(res => {
+      if (res.data?.publishableKey) {
+        setPublishableKey(res.data.publishableKey);
+      }
+    });
+  }, []);
+
+  useEffect(() => {
+    if (paymentMethod === 'credit_card' && currentStep === 2 && !clientSecret) {
+      apiClient.createStripePaymentIntent(deliveryMethod).then(res => {
+        if (res.data?.clientSecret) {
+          setClientSecret(res.data.clientSecret);
+        } else {
+          toast.error('Failed to initialize payment');
+        }
+      }).catch(() => {
+        toast.error('Error initializing payment');
+      });
+    }
+  }, [paymentMethod, currentStep, deliveryMethod, clientSecret]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -154,23 +103,7 @@ export default function CheckoutPage() {
         redirectTo: '/checkout',
       });
     }
-
-    apiClient.getStripeConfig().then((res) => {
-      if (res.data) {
-        setStripePromise(loadStripe((res.data as { publishableKey: string }).publishableKey));
-      }
-    });
   }, [isAuthenticated, openAuthModal]);
-
-  useEffect(() => {
-    if (paymentMethod === 'stripe' && currentStep === 2 && !clientSecret) {
-      apiClient.createStripePaymentIntent(deliveryMethod).then((res) => {
-        if (res.data) {
-          setClientSecret((res.data as { clientSecret: string }).clientSecret);
-        }
-      });
-    }
-  }, [paymentMethod, currentStep, deliveryMethod, clientSecret]);
 
   const subtotal = getTotal();
   const shipping = subtotal > 50 ? 0 : 5.99;
@@ -178,7 +111,7 @@ export default function CheckoutPage() {
   const tax = subtotal * 0.08;
   const total = subtotal + shipping + expressShipping + tax;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (currentStep < CHECKOUT_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -187,33 +120,26 @@ export default function CheckoutPage() {
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
+      // Clear client secret if we go back so it refetches with correct amount
+      if (currentStep === 2) {
+        setClientSecret(null);
+      }
     }
   };
 
   const handlePlaceOrder = async () => {
-    if (paymentMethod === 'stripe') {
-      return; // Handled by StripePaymentForm
-    }
-    await handleCashOnDelivery();
-  };
-
-  const handleCashOnDelivery = async () => {
     setIsProcessing(true);
 
     try {
-      const orderResponse = await apiClient.createOrder({
+      const res = await apiClient.createOrder({
         shippingInfo,
         deliveryMethod,
         paymentMethod,
         saveInfo,
       });
 
-      if (orderResponse.error) {
-        toast.error('Failed to place order', {
-          description: orderResponse.error,
-        });
-        setIsProcessing(false);
-        return;
+      if (res.error) {
+        throw new Error(res.error);
       }
 
       toast.success('Order placed successfully!', {
@@ -221,11 +147,9 @@ export default function CheckoutPage() {
       });
       clearCart();
       router.push('/order-confirmation');
-    } catch (error) {
-      console.error('Order error:', error);
-      toast.error('Failed to place order', {
-        description: 'An error occurred while placing your order.',
-      });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to place order');
+    } finally {
       setIsProcessing(false);
     }
   };
@@ -486,25 +410,26 @@ export default function CheckoutPage() {
                   <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
                     <div className="space-y-4">
                       <div>
-                        <RadioGroupItem value="stripe" id="stripe" className="sr-only peer" />
+                        <RadioGroupItem value="credit_card" id="credit_card" className="sr-only peer" />
                         <Label
-                          htmlFor="stripe"
-                          className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer peer-data-[state=checked]:border-primary"
+                          htmlFor="credit_card"
+                          className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5"
                         >
                           <CreditCard className="w-5 h-5" />
                           <div>
-                            <span className="font-medium">Credit / Debit Card</span>
+                            <span className="font-medium">Credit/Debit Card</span>
                             <p className="text-xs text-muted-foreground">Secure payment via Stripe</p>
                           </div>
                         </Label>
                       </div>
+
                       <div>
                         <RadioGroupItem value="cash_on_delivery" id="cash_on_delivery" className="sr-only peer" />
                         <Label
                           htmlFor="cash_on_delivery"
-                          className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer peer-data-[state=checked]:border-primary"
+                          className="flex items-center gap-3 p-4 border rounded-lg cursor-pointer peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5"
                         >
-                          <Lock className="w-5 h-5" />
+                          <Truck className="w-5 h-5" />
                           <div>
                             <span className="font-medium">Cash on Delivery</span>
                             <p className="text-xs text-muted-foreground">Pay when you receive your order</p>
@@ -514,32 +439,31 @@ export default function CheckoutPage() {
                     </div>
                   </RadioGroup>
 
-                  {paymentMethod === 'stripe' && clientSecret && stripePromise && (
-                    <Elements stripe={stripePromise} options={{ clientSecret }}>
-                      <StripePaymentForm
-                        clientSecret={clientSecret}
-                        shippingInfo={shippingInfo}
-                        deliveryMethod={deliveryMethod}
-                        saveInfo={saveInfo}
-                        onSuccess={() => {
-                          toast.success('Order placed successfully!', {
-                            description: 'You will receive a confirmation email shortly.',
-                          });
-                          clearCart();
-                          router.push('/order-confirmation');
-                        }}
-                        onError={(msg) => {
-                          toast.error('Payment failed', { description: msg });
-                          setIsProcessing(false);
-                        }}
-                      />
-                    </Elements>
-                  )}
-
-                  {paymentMethod === 'stripe' && !clientSecret && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Loading payment form...</span>
+                  {paymentMethod === 'credit_card' && publishableKey && clientSecret && (
+                    <div className="mt-4">
+                      <Elements stripe={getStripe(publishableKey)} options={{ clientSecret }}>
+                        <StripePaymentForm 
+                          amount={Math.round(total * 100)} 
+                          onCancel={handleBack} 
+                          onSuccess={async (paymentIntentId) => {
+                            try {
+                              const res = await apiClient.confirmStripeOrder({
+                                paymentIntentId,
+                                shippingInfo,
+                                deliveryMethod,
+                                saveInfo
+                              });
+                              if (res.error) throw new Error(res.error);
+                              
+                              toast.success('Payment successful!');
+                              clearCart();
+                              router.push('/order-confirmation');
+                            } catch (e: any) {
+                              toast.error(e.message || 'Failed to confirm order');
+                            }
+                          }}
+                        />
+                      </Elements>
                     </div>
                   )}
 
@@ -557,32 +481,44 @@ export default function CheckoutPage() {
             )}
 
             {/* Navigation */}
-            <div className="flex justify-between mt-6">
-              <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
-                <ChevronLeft className="w-4 h-4 mr-2" />
-                Back
-              </Button>
-              {currentStep < CHECKOUT_STEPS.length - 1 ? (
-                <Button onClick={handleNext}>
-                  Continue
-                  <ChevronRight className="w-4 h-4 ml-2" />
+            {/* Navigation */}
+            {!(currentStep === 2 && paymentMethod === 'credit_card') && (
+              <div className="flex justify-between mt-6">
+                <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
+                  <ChevronLeft className="w-4 h-4 mr-2" />
+                  Back
                 </Button>
-              ) : paymentMethod === 'cash_on_delivery' ? (
-                <Button onClick={handlePlaceOrder} disabled={isProcessing}>
-                  {isProcessing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="w-4 h-4 mr-2" />
-                      Place Order
-                    </>
-                  )}
-                </Button>
-              ) : null}
-            </div>
+                {currentStep < CHECKOUT_STEPS.length - 1 ? (
+                  <Button onClick={handleNext} disabled={isProcessing}>
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Initializing...
+                      </>
+                    ) : (
+                      <>
+                        Continue
+                        <ChevronRight className="w-4 h-4 ml-2" />
+                      </>
+                    )}
+                  </Button>
+                ) : (
+                  <Button onClick={handlePlaceOrder} disabled={isProcessing}>
+                    {isProcessing ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="w-4 h-4 mr-2" />
+                        Place Order
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
           </motion.div>
         </div>
 

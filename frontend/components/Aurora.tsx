@@ -140,6 +140,16 @@ export default function Aurora(props: AuroraProps) {
     gl.canvas.style.backgroundColor = 'transparent';
 
     let program: Program | undefined;
+    let animateId = 0;
+    let isVisible = true;
+    let isPageVisible = !document.hidden;
+    let lastColorKey = '';
+
+    const toColorStops = (stops: string[]) =>
+      stops.map(hex => {
+        const c = new Color(hex);
+        return [c.r, c.g, c.b];
+      });
 
     function resize() {
       if (!ctn) return;
@@ -157,10 +167,8 @@ export default function Aurora(props: AuroraProps) {
       delete geometry.attributes.uv;
     }
 
-    const colorStopsArray = colorStops.map(hex => {
-      const c = new Color(hex);
-      return [c.r, c.g, c.b];
-    });
+    const colorStopsArray = toColorStops(colorStops);
+    lastColorKey = colorStops.join(',');
 
     program = new Program(gl, {
       vertex: VERT,
@@ -177,8 +185,14 @@ export default function Aurora(props: AuroraProps) {
     const mesh = new Mesh(gl, { geometry, program });
     ctn.appendChild(gl.canvas);
 
-    let animateId = 0;
+    const shouldAnimate = () => isVisible && isPageVisible;
+
     const update = (t: number) => {
+      if (!shouldAnimate()) {
+        animateId = 0;
+        return;
+      }
+
       animateId = requestAnimationFrame(update);
       const { time = t * 0.01, speed = 1.0 } = propsRef.current;
       if (program) {
@@ -186,26 +200,59 @@ export default function Aurora(props: AuroraProps) {
         program.uniforms.uAmplitude.value = propsRef.current.amplitude ?? 1.0;
         program.uniforms.uBlend.value = propsRef.current.blend ?? blend;
         const stops = propsRef.current.colorStops ?? colorStops;
-        program.uniforms.uColorStops.value = stops.map((hex: string) => {
-          const c = new Color(hex);
-          return [c.r, c.g, c.b];
-        });
+        const colorKey = stops.join(',');
+        if (colorKey !== lastColorKey) {
+          lastColorKey = colorKey;
+          program.uniforms.uColorStops.value = toColorStops(stops);
+        }
         renderer.render({ scene: mesh });
       }
     };
-    animateId = requestAnimationFrame(update);
+
+    const startLoop = () => {
+      if (animateId || !shouldAnimate()) return;
+      animateId = requestAnimationFrame(update);
+    };
+
+    const stopLoop = () => {
+      if (!animateId) return;
+      cancelAnimationFrame(animateId);
+      animateId = 0;
+    };
+
+    const onVisibilityChange = () => {
+      isPageVisible = !document.hidden;
+      if (isPageVisible) startLoop();
+      else stopLoop();
+    };
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        isVisible = entry.isIntersecting;
+        if (isVisible) startLoop();
+        else stopLoop();
+      },
+      { threshold: 0.01 }
+    );
+    observer.observe(ctn);
+    document.addEventListener('visibilitychange', onVisibilityChange);
 
     resize();
+    startLoop();
 
     return () => {
-      cancelAnimationFrame(animateId);
+      stopLoop();
+      observer.disconnect();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('resize', resize);
       if (ctn && gl.canvas.parentNode === ctn) {
         ctn.removeChild(gl.canvas);
       }
       gl.getExtension('WEBGL_lose_context')?.loseContext();
     };
-  }, [amplitude]);
+    // Props are read via propsRef; recreate only on mount/unmount to avoid WebGL thrash.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return <div ref={ctnDom} className="w-full h-full" />;
 }

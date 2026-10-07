@@ -72,6 +72,7 @@ export interface Product {
   description?: string;
   shortDescription?: string;
   price: number;
+  costPrice?: number;
   compareAtPrice?: number;
   productType: ProductType;
   featuredImage: string;
@@ -238,6 +239,30 @@ export interface InventoryMovement {
   createdAt?: Date;
 }
 
+export type DiscountType = "PERCENTAGE" | "FIXED";
+
+export interface Coupon {
+  _id?: string;
+  id: string;
+  code: string;
+  discountType: DiscountType;
+  discountValue: number;
+  isActive: boolean;
+  expiryDate?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export interface UserInvitation {
+  _id?: string;
+  id: string;
+  email: string;
+  role: string;
+  token: string;
+  expiresAt: Date;
+  createdAt?: Date;
+}
+
 type ProductWithRelations = Product & {
   category?: Category | null;
   images?: string[];
@@ -348,6 +373,7 @@ export function serializeAuthUser(profile: UserProfile) {
     firstName: profile.firstName,
     lastName: profile.lastName ?? "",
     phone: profile.phone ?? undefined,
+    role: profile.role ?? "CUSTOMER",
   };
 }
 

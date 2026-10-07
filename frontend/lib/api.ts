@@ -1,17 +1,37 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
-interface ApiResponse<T> {
+export interface ApiResponse<T> {
   data?: T;
   error?: string;
+  total?: number;
+  limit?: number;
+  offset?: number;
 }
 
 export class ApiClient {
-  private baseUrl: string;
   private _token: string | null = null;
   private _userId: string | null = null;
+  private client: AxiosInstance;
 
-  constructor(baseUrl: string) {
-    this.baseUrl = baseUrl;
+  constructor() {
+    this.client = axios.create({
+      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000',
+      timeout: 8000,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    // Interceptor to add auth and user headers
+    this.client.interceptors.request.use((config) => {
+      if (this._token) {
+        config.headers.Authorization = `Bearer ${this._token}`;
+      }
+      if (this._userId) {
+        config.headers['X-User-ID'] = this._userId;
+      }
+      return config;
+    });
   }
 
   get token() {
@@ -28,143 +48,77 @@ export class ApiClient {
     this._userId = null;
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      ...(options.headers as Record<string, string>),
-    };
-
-    if (this._token) {
-      headers['Authorization'] = `Bearer ${this._token}`;
-    }
-
-    if (this._userId) {
-      headers['x-user-id'] = this._userId;
-    }
-
+  private async handleRequest<T>(requestFn: () => Promise<AxiosResponse<any>>): Promise<ApiResponse<T>> {
     try {
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
-        ...options,
-        headers,
-      });
-
-      const text = await response.text();
-      let data: any;
-      try {
-        data = JSON.parse(text);
-      } catch {
-        return { error: text || `HTTP error! status: ${response.status}` };
+      const response = await requestFn();
+      return response.data as ApiResponse<T>;
+    } catch (error: any) {
+      if (error.response) {
+        const data = error.response.data;
+        return { error: data?.error || data?.message || 'An error occurred' };
       }
-
-      if (!response.ok) {
-        return { error: data?.error || data?.message || `HTTP error! status: ${response.status}` };
-      }
-
-      return { data: data?.data ?? data };
-    } catch (error) {
-      return { error: error instanceof Error ? error.message : 'An error occurred' };
+      return { error: error.message || 'Network error' };
     }
   }
 
-  // ─── Auth ──────────────────────────────────────────────────────────────────
-
-  async register(input: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone?: string;
-    password: string;
-  }) {
-    return this.request<{ user: { id: string; email: string; firstName: string; lastName: string; phone?: string }; token: string }>(
-      '/auth/register',
-      { method: 'POST', body: JSON.stringify(input) }
-    );
+  async register(input: any) {
+    return this.handleRequest<any>(() => this.client.post('/auth/register', input));
   }
 
   async login(email: string, password: string) {
-    return this.request<{ user: { id: string; email: string; firstName: string; lastName: string; phone?: string }; token: string }>(
-      '/auth/login',
-      { method: 'POST', body: JSON.stringify({ email, password }) }
-    );
+    return this.handleRequest<any>(() => this.client.post('/auth/login', { email, password }));
   }
 
   async logout() {
-    return this.request<void>('/auth/logout', { method: 'POST' });
+    return this.handleRequest<any>(() => this.client.post('/auth/logout'));
   }
 
-  // ─── Catalog ───────────────────────────────────────────────────────────────
-
   async getProducts(params?: Record<string, string>) {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<Array<Record<string, unknown>>>(`/catalog/products${qs}`);
+    return this.handleRequest<any>(() => this.client.get('/catalog/products', { params }));
   }
 
   async getProduct(slug: string) {
-    return this.request<Record<string, unknown>>(`/catalog/products/${slug}`);
+    return this.handleRequest<any>(() => this.client.get(`/catalog/products/${slug}`));
   }
 
-  // ─── Cart ──────────────────────────────────────────────────────────────────
-
   async getCart() {
-    return this.request<Array<Record<string, unknown>>>('/customers/cart');
+    return this.handleRequest<any>(() => this.client.get('/customers/cart'));
   }
 
   async addToCart(productId: string, quantity: number, customizationData?: Record<string, unknown>) {
-    return this.request<{ message: string }>('/customers/cart/items', {
-      method: 'POST',
-      body: JSON.stringify({ productId, quantity, customizationData }),
-    });
+    return this.handleRequest<any>(() => this.client.post('/customers/cart/items', { productId, quantity, customizationData }));
   }
 
   async updateCartItem(itemId: string, quantity: number) {
-    return this.request<{ message: string }>(`/customers/cart/items/${itemId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ quantity }),
-    });
+    return this.handleRequest<any>(() => this.client.patch(`/customers/cart/items/${itemId}`, { quantity }));
   }
 
   async removeFromCart(itemId: string) {
-    return this.request<{ message: string }>(`/customers/cart/items/${itemId}`, {
-      method: 'DELETE',
-    });
+    return this.handleRequest<any>(() => this.client.delete(`/customers/cart/items/${itemId}`));
   }
 
-  // ─── Orders ────────────────────────────────────────────────────────────────
-
   async getOrders(params?: Record<string, string>) {
-    const qs = params ? '?' + new URLSearchParams(params).toString() : '';
-    return this.request<Array<Record<string, unknown>>>(`/orders/orders${qs}`);
+    return this.handleRequest<any>(() => this.client.get('/orders/orders', { params }));
   }
 
   async getOrder(orderNumber: string) {
-    return this.request<Record<string, unknown>>(`/orders/orders/${orderNumber}`);
+    return this.handleRequest<any>(() => this.client.get(`/orders/orders/${orderNumber}`));
   }
 
   async trackOrder(orderNumber: string) {
-    return this.request<Record<string, unknown>>(`/orders/track/${orderNumber}`);
+    return this.handleRequest<any>(() => this.client.get(`/orders/track/${orderNumber}`));
   }
 
   async createOrder(orderData: Record<string, unknown>) {
-    return this.request<{ orderNumber: string; totalAmount: number; status: string }>('/orders/orders', {
-      method: 'POST',
-      body: JSON.stringify(orderData),
-    });
+    return this.handleRequest<any>(() => this.client.post('/orders/orders', orderData));
   }
 
-  // ─── Stripe Payments ───────────────────────────────────────────────────────
-
   async getStripeConfig() {
-    return this.request<{ publishableKey: string }>('/payments/stripe/config');
+    return this.handleRequest<any>(() => this.client.get('/payments/stripe/config'));
   }
 
   async createStripePaymentIntent(deliveryMethod: string) {
-    return this.request<{ clientSecret: string; amount: number }>(
-      '/payments/stripe/create-payment-intent',
-      { method: 'POST', body: JSON.stringify({ deliveryMethod }) }
-    );
+    return this.handleRequest<any>(() => this.client.post('/payments/stripe/create-payment-intent', { deliveryMethod }));
   }
 
   async confirmStripeOrder(data: {
@@ -173,43 +127,28 @@ export class ApiClient {
     deliveryMethod: string;
     saveInfo?: boolean;
   }) {
-    return this.request<{ orderNumber: string; totalAmount: number; status: string }>(
-      '/payments/stripe/confirm-order',
-      { method: 'POST', body: JSON.stringify(data) }
-    );
+    return this.handleRequest<any>(() => this.client.post('/payments/stripe/confirm-order', data));
   }
 
-  // ─── Addresses ─────────────────────────────────────────────────────────────
-
   async getAddresses() {
-    return this.request<Array<Record<string, unknown>>>('/customers/addresses');
+    return this.handleRequest<any>(() => this.client.get('/customers/addresses'));
   }
 
   async createAddress(data: Record<string, unknown>) {
-    return this.request<Record<string, unknown>>('/customers/addresses', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
+    return this.handleRequest<any>(() => this.client.post('/customers/addresses', data));
   }
 
   async deleteAddress(addressId: string) {
-    return this.request<{ message: string }>(`/customers/addresses/${addressId}`, {
-      method: 'DELETE',
-    });
+    return this.handleRequest<any>(() => this.client.delete(`/customers/addresses/${addressId}`));
   }
 
-  // ─── Profile ───────────────────────────────────────────────────────────────
-
   async getProfile() {
-    return this.request<Record<string, unknown>>('/customers/profile');
+    return this.handleRequest<any>(() => this.client.get('/customers/profile'));
   }
 
   async updateProfile(data: Record<string, string>) {
-    return this.request<{ message: string }>('/customers/profile', {
-      method: 'PATCH',
-      body: JSON.stringify(data),
-    });
+    return this.handleRequest<any>(() => this.client.patch('/customers/profile', data));
   }
 }
 
-export const apiClient = new ApiClient(API_BASE_URL);
+export const apiClient = new ApiClient();

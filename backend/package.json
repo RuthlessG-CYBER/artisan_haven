@@ -11,12 +11,15 @@
     "dev:customers": "npm --workspace @artisan-haven/customer-service run dev",
     "dev:orders": "npm --workspace @artisan-haven/order-service run dev",
     "dev:auth-sync": "npm --workspace @artisan-haven/auth-sync-service run dev",
+    "dev:all": "cross-env NODE_OPTIONS=\"--max-old-space-size=512\" concurrently \"npm run dev:gateway\" \"npm run dev:catalog\" \"npm run dev:customers\" \"npm run dev:orders\"",
     "prisma:generate": "npm --workspace @artisan-haven/database run prisma:generate",
     "prisma:migrate": "npm --workspace @artisan-haven/database run prisma:migrate",
     "prisma:seed": "npm --workspace @artisan-haven/database run prisma:seed"
   },
   "devDependencies": {
-    "@types/node": "^24.3.0"
+    "@types/node": "^24.3.0",
+    "concurrently": "^10.0.5",
+    "cross-env": "^10.1.0"
   },
   "dependencies": {
     "mongodb": "^7.4.0"

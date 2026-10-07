@@ -175,6 +175,31 @@
     @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
   }
 
+  @keyframes gradient-text-shift {
+    0% {
+      background-position: var(--gt-from, 0% 50%);
+    }
+    100% {
+      background-position: var(--gt-to, 100% 50%);
+    }
+  }
+
+  @keyframes shiny-text-shift {
+    0% {
+      background-position: 150% center;
+    }
+    100% {
+      background-position: -50% center;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gradient-text-animated,
+    .shiny-text-animated {
+      animation: none !important;
+    }
+  }
+
   .surface-card {
     @apply rounded-2xl border border-border/50 bg-card/80 shadow-sm backdrop-blur-sm;
   }
